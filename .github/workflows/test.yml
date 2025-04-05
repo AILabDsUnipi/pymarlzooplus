@@ -1,6 +1,9 @@
 name: Tests on latest tag
 
 on:
+  pull_request:
+    branches:
+      - main
   push:
     tags:
       - 'v*'
@@ -25,5 +28,6 @@ jobs:
           pip install opencv-python-headless
           AutoROM -y
 
-      - name: Run tests
-        run: python -m unittest test.py
+      - name: Run tests # For now we will run only the tests about the envs API. Later we will use a self-hosted runner to run the full test suite.
+        run: python -m unittest tests.test_envs_api
+

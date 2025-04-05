@@ -1,6 +1,9 @@
 name: Tests on latest tag 3.11
 
 on:
+  pull_request:
+    branches:
+      - main
   push:
     tags:
       - 'v*'
@@ -27,4 +30,5 @@ jobs:
           AutoROM -y
 
       - name: Run tests
-        run: python -m unittest test.py
+        run: python -m unittest tests.test_envs_api
+

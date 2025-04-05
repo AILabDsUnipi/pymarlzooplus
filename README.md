@@ -1,10 +1,10 @@
 # PyMARLzoo+
-![Static Badge](https://img.shields.io/badge/Python-3.8-blue)
+![Python Versions](https://img.shields.io/badge/Python-3.8%20%7C%203.9%20%7C%203.10%20%7C%203.11-blue)
 [![Tests](https://github.com/AILabDsUnipi/pymarlzooplus/actions/workflows/test.yml/badge.svg)](https://github.com/AILabDsUnipi/pymarlzooplus/actions/workflows/test.yml)
 ![GitHub License](https://img.shields.io/github/license/AILabDsUnipi/pymarlzooplus)
 
 
-<img src="./images/logo.jpg" alt="logo" width=600/>
+<img src="https://raw.githubusercontent.com/AILabDsUnipi/pymarlzooplus/main/images/logo.jpg" alt="logo" width=600/>
 
 PyMARLzoo+ is an extension of [EPyMARL](https://github.com/uoe-agents/epymarl), and includes
 - Additional (7) algorithms: 
@@ -95,7 +95,11 @@ set `__GLX_VENDOR_LIBRARY_NAME=nvidia` and `__NV_PRIME_RENDER_OFFLOAD=1` as envi
   ```sh
   pip install --upgrade --force-reinstall pymunk cffi
   ```
-
+- In case you get `ImportError: ../bin/../lib/libstdc++.so.6: 'version GLIBCXX_3.4.32' not found`, run:
+ 
+```sh
+  conda install -c conda-forge libstdcxx-ng
+```
 # Docker
 You can also use the provided Docker files in [docker/](/docker/) to build and run a Docker container with the 
 pymarlzooplus installed as a headless machine.
@@ -132,7 +136,7 @@ You can specify the algorithm arguments:
 
 ## LBF
 
-<img src="./images/lbf.gif" alt="lbf gif" align="center" width="40%"/>
+<img src="https://raw.githubusercontent.com/AILabDsUnipi/pymarlzooplus/main/images/lbf.gif" alt="lbf gif" align="center" width="40%"/>
 
 - As a package (replace ```"algo"``` and ```"scenario"```):
 
@@ -175,7 +179,7 @@ All the above scenarios are compatible both with our **training framework** and 
 
 
 ## RWARE
-<img src="./images/rware.gif"  align="center" height="40%"/>
+<img src="https://raw.githubusercontent.com/AILabDsUnipi/pymarlzooplus/main/images/rware.gif"  align="center" height="40%"/>
 
 - As a package (replace ```"algo"``` and ```"scenario"```):
   ```python
@@ -212,7 +216,7 @@ All the above scenarios are compatible both with our **training framework** and 
 
 
 ## MPE
-<img src="./images/mpe.gif" alt="logo" align="center" width="40%"/>
+<img src="https://raw.githubusercontent.com/AILabDsUnipi/pymarlzooplus/main/images/mpe.gif" alt="logo" align="center" width="40%"/>
 
 - As a package (replace ```"algo"``` and ```"scenario"```):
   ```python
@@ -260,7 +264,7 @@ All the above scenarios are compatible both with our **training framework** and 
 
 
 ## PettingZoo
-<img src="./images/pistonball.gif" alt="pistonball gif"  align="center" width="40%"/>
+<img src="https://raw.githubusercontent.com/AILabDsUnipi/pymarlzooplus/main/images/pistonball.gif" alt="pistonball gif"  align="center" width="40%"/>
 
 - As a package (replace ```"algo"```, ```"task"```, and ```0000```):
   ```python
@@ -357,7 +361,7 @@ Below, we list more tasks which are compatible only with the **environment API**
 
 
 ## Overcooked
-<img src="./images/overcooked.gif" alt="overcooked gif"  align="center" width="40%"/>
+<img src="https://raw.githubusercontent.com/AILabDsUnipi/pymarlzooplus/main/images/overcooked.gif" alt="overcooked gif"  align="center" width="40%"/>
 
 - As a package (replace ```"algo"```, ```"scenario"```, and ```"rewardType"```):
   ```python
@@ -421,7 +425,7 @@ All the above scenarios are compatible both with our **training framework** and 
 
 
 ## Pressure plate
-<img src="./images/pressureplate.gif" alt="pressureplate gif"  align="center" width="40%"/>
+<img src="https://raw.githubusercontent.com/AILabDsUnipi/pymarlzooplus/main/images/pressureplate.gif" alt="pressureplate gif"  align="center" width="40%"/>
 
 - As a package (replace ```"algo"``` and ```"scenario"```):
   ```python
@@ -493,7 +497,7 @@ The above scenario is compatible both with our **training framework** and the **
 
 ## Box Pushing
 
-<img src="./images/boxpushing.gif" alt="boxpushing gif"  align="center" width="40%"/>
+<img src="https://raw.githubusercontent.com/AILabDsUnipi/pymarlzooplus/main/images/boxpushing.gif" alt="boxpushing gif"  align="center" width="40%"/>
 
 - As a package (replace ```"algo"``` and ```"scenario"```):
   ```python
@@ -649,7 +653,17 @@ In BibTeX format:
   year = {2019},
 }
 ```
+# Issues
 
+If you encounter a bug, have a feature request, or any other questions about the project, we encourage you to open an issue. Please follow these steps:
+
+1. **Visit the Issues Tab:** Navigate to the [Issues](https://github.com/AILabDsUnipi/pymarlzooplus/issues) section of our repository.
+2. **Click on "New Issue":** Start a new issue by clicking the "New Issue" button.
+3. **Choose the Correct Label:** Select the one that best fits your situation (e.g. bug, question, help needed).
+4. **Provide Details:** Include a clear title and a detailed description. For bugs, please describe the steps to reproduce the issue, the expected behavior, and any relevant system information.
+5. **Submit the Issue:** Once you've provided all necessary details, click the "Submit new issue" button.
+
+Thank you for contributing to the project and helping us improve!
 # License
 All the source code that has been taken from the EPyMARL and PyMARL repository was licensed (and remains so) under the Apache License v2.0 (included in `LICENSE` file).
 Any new code is also licensed under the Apache License v2.0
