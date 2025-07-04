@@ -1,0 +1,43 @@
+# --- MAVEN specific parameters ---
+
+# use epsilon greedy action selector
+action_selector: "epsilon_greedy"
+epsilon_start: 1.0
+epsilon_finish: 0.05
+epsilon_anneal_time: 50000
+evaluation_epsilon: 0.0
+
+runner: "parallel"
+batch_size_run: 1
+
+buffer_size: 5000
+# pc mode buffer_size: 500
+
+# update the target network every {} episodes
+target_update_interval: 200
+
+# use the Q_Learner to train
+agent_output_type: "q"
+learner: "maven_learner"
+double_q: True
+mixer: "maven"
+mixing_embed_dim: 32
+skip_connections: False
+hyper_initialization_nonzeros: 0
+
+mi_intrinsic: False
+mi_scaler: 0.1
+hard_qs: False
+
+mac: "maven_mac"
+agent: "rnn_maven"
+noise_dim: 2
+noise_embedding_dim: 32
+rnn_discrim: False
+
+mi_loss: 1
+
+discrim_size: 32
+discrim_layers: 1
+
+name: "maven"
