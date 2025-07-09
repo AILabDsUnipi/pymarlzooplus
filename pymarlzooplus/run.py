@@ -128,6 +128,7 @@ def run_sequential(args, logger):
         "reward": {"vshape": (1,)},
         "terminated": {"vshape": (1,), "dtype": th.uint8},
     }
+    # For MAVEN
     if hasattr(args, "noise_dim") and args.noise_dim is not None:
         scheme["noise"] = {"vshape": (args.noise_dim,)}
         
