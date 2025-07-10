@@ -10,6 +10,10 @@ from pymarlzooplus.components.episode_buffer import EpisodeBatch
 from pymarlzooplus.utils.image_encoder import ImageEncoder
 from pymarlzooplus.utils.env_utils import check_env_installation
 
+from modules.bandits.uniform import Uniform
+from modules.bandits.reinforce_hierarchial import EZ_agent as enza
+from modules.bandits.returns_bandit import ReturnsBandit as RBandit
+
 
 # Based (very) heavily on SubprocVecEnv from OpenAI Baselines
 # https://github.com/openai/baselines/blob/master/baselines/common/vec_env/subproc_vec_env.py
@@ -112,7 +116,20 @@ class ParallelRunner:
         self.scheme = scheme
         self.groups = groups
         self.preprocess = preprocess
+        
+        if hasattr(self.args, "noise_dim") and self.args.noise_dim is not None:
+            if not hasattr(self, "noise_returns"): self.noise_returns = {}
+            if not hasattr(self, "noise_test_won"): self.noise_test_won = {}
+            if not hasattr(self, "noise_train_won"): self.noise_train_won = {}
 
+            if self.args.noise_bandit:
+                if self.args.bandit_policy:
+                    self.noise_distrib = enza(self.args, logger=self.logger)
+                else:
+                    self.noise_distrib = RBandit(self.args, logger=self.logger)
+            else:
+               self.noise_distrib = Uniform(self.args)
+               
     def get_env_info(self):
         return self.env_info
 
@@ -123,7 +140,7 @@ class ParallelRunner:
         for parent_conn in self.parent_conns:
             parent_conn.send(("close", None))
 
-    def reset(self):
+    def reset(self, test_mode=False):
         self.batch = self.new_batch()
 
         # Reset the envs
@@ -154,13 +171,17 @@ class ParallelRunner:
                 pre_transition_data["hidden_states_critic"] = hidden_states_dict["hidden_states_critic"]
 
         self.batch.update(pre_transition_data, ts=0)
-
+        
+        if hasattr(self.args, "noise_dim") and self.args.noise_dim is not None:
+            self.noise = self.noise_distrib.sample(self.batch['state'][:,0], test_mode)
+            self.batch.update({"noise": self.noise}, ts=0)
+        
         self.t = 0
         self.env_steps_this_run = 0
 
         return pre_transition_data
 
-    def run(self, test_mode=False):
+    def run(self, test_mode=False, test_uniform=False):
         pre_transition_data = self.reset()
 
         episode_returns = [0 for _ in range(self.batch_size)]
@@ -310,10 +331,18 @@ class ParallelRunner:
 
         cur_returns.extend(episode_returns)
 
+        if hasattr(self.args, "noise_dim") and self.args.noise_dim is not None:
+            self._update_noise_returns(episode_returns, self.noise, final_env_infos, test_mode)
+            self.noise_distrib.update_returns(self.batch['state'][:,0], self.noise, episode_returns, test_mode, self.t_env)
+        
         n_test_runs = max(1, self.args.test_nepisode // self.batch_size) * self.batch_size
         if test_mode and (len(self.test_returns) == n_test_runs):
+            if hasattr(self.args, "noise_dim") and self.args.noise_dim is not None:
+                self._log_noise_returns(test_mode, test_uniform) 
             self._log(cur_returns, cur_stats, log_prefix)
         elif self.t_env - self.log_train_stats_t >= self.args.runner_log_interval:
+            if hasattr(self.args, "noise_dim") and self.args.noise_dim is not None:
+                self._log_noise_returns(test_mode, test_uniform)
             self._log(cur_returns, cur_stats, log_prefix)
             if hasattr(self.mac.action_selector, "epsilon"):
                 self.logger.log_stat("epsilon", self.mac.action_selector.epsilon, self.t_env)
@@ -331,6 +360,57 @@ class ParallelRunner:
                 self.logger.log_stat(prefix + k + "_mean", v/stats["n_episodes"], self.t_env)
         stats.clear()
 
+    def _update_noise_returns(self, returns, noise, stats, test_mode):
+        for n, r in zip(noise, returns):
+            n = int(np.argmax(n))
+            if n in self.noise_returns:
+                self.noise_returns[n].append(r)
+            else:
+                self.noise_returns[n] = [r]
+        if test_mode:
+            noise_won = self.noise_test_won
+        else:
+            noise_won = self.noise_train_won
+
+        if stats != [] and "battle_won" in stats[0]:
+            for n, info in zip(noise, stats):
+                if "battle_won" not in info:
+                    continue
+                bw = info["battle_won"]
+                n = int(np.argmax(n))
+                if n in noise_won:
+                    noise_won[n].append(bw)
+                else:
+                    noise_won[n] = [bw]
+
+    def _log_noise_returns(self, test_mode, test_uniform):
+        if test_mode:
+            max_noise_return = -100000
+            for n,rs in self.noise_returns.items():
+                n_item = n
+                r_mean = float(np.mean(rs))
+                max_noise_return = max(r_mean, max_noise_return)
+                self.logger.log_stat("{}_noise_test_ret_u_{:1}".format(n_item, test_uniform), r_mean, self.t_env)
+            self.logger.log_stat("max_noise_test_ret_u_{:1}".format(test_uniform), max_noise_return, self.t_env)
+
+        noise_won = self.noise_test_won
+        prefix = "test"
+        if test_uniform:
+            prefix += "_uni"
+        if not test_mode:
+            noise_won = self.noise_train_won
+            prefix = "train"
+        if len(noise_won.keys()) > 0:
+            max_test_won = 0
+            for n, rs in noise_won.items():
+                n_item = n #int(np.argmax(n))
+                r_mean = float(np.mean(rs))
+                max_test_won = max(r_mean, max_test_won)
+                self.logger.log_stat("{}_noise_{}_won".format(n_item, prefix), r_mean, self.t_env)
+            self.logger.log_stat("max_noise_{}_won".format(prefix), max_test_won, self.t_env)
+        self.noise_returns = {}
+        self.noise_test_won = {}
+        self.noise_train_won = {}
 
 def env_worker(remote, env_fn, image_encoder):
     # Make environment
@@ -415,4 +495,3 @@ class CloudpickleWrapper:
     def __setstate__(self, ob):
         import pickle
         self.x = pickle.loads(ob)
-
