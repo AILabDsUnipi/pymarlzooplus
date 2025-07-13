@@ -99,6 +99,8 @@ class ParallelRunner:
         self.train_stats = {}
         self.test_stats = {}
 
+        self._in_test_phase = False
+        
         self.log_train_stats_t = -100000
 
     def setup(self, scheme, groups, preprocess, mac, explorer):
@@ -182,6 +184,13 @@ class ParallelRunner:
         return pre_transition_data
 
     def run(self, test_mode=False, test_uniform=False):
+        
+        if hasattr(self.args, "noise_dim") and self.args.noise_dim is not None:
+            if test_mode and not self._in_test_phase:
+                self.noise_returns = {}
+                self.noise_test_won = {}
+        
+        self._in_test_phase = test_mode
         pre_transition_data = self.reset()
 
         episode_returns = [0 for _ in range(self.batch_size)]
@@ -328,28 +337,33 @@ class ParallelRunner:
         cur_stats.update({k: sum(d.get(k, 0) for d in infos) for k in set.union(*[set(d) for d in infos])})
         cur_stats["n_episodes"] = self.batch_size + cur_stats.get("n_episodes", 0)
         cur_stats["ep_length"] = sum(episode_lengths) + cur_stats.get("ep_length", 0)
-
+        
         cur_returns.extend(episode_returns)
-
+       
         if hasattr(self.args, "noise_dim") and self.args.noise_dim is not None:
             self._update_noise_returns(episode_returns, self.noise, final_env_infos, test_mode)
-            self.noise_distrib.update_returns(self.batch['state'][:,0], self.noise, episode_returns, test_mode, self.t_env)
-        
+            if not test_mode:
+                self.noise_distrib.update_returns(self.batch['state'][:,0], self.noise, episode_returns, test_mode, self.t_env)
+       
         n_test_runs = max(1, self.args.test_nepisode // self.batch_size) * self.batch_size
-        if test_mode and (len(self.test_returns) == n_test_runs):
-            if hasattr(self.args, "noise_dim") and self.args.noise_dim is not None:
-                self._log_noise_returns(test_mode, test_uniform) 
+ 
+        if test_mode and (len(self.test_returns) >= n_test_runs):
             self._log(cur_returns, cur_stats, log_prefix)
-        elif self.t_env - self.log_train_stats_t >= self.args.runner_log_interval:
             if hasattr(self.args, "noise_dim") and self.args.noise_dim is not None:
                 self._log_noise_returns(test_mode, test_uniform)
+       
+        elif self.t_env - self.log_train_stats_t >= self.args.runner_log_interval:
+           
             self._log(cur_returns, cur_stats, log_prefix)
+            if hasattr(self.args, "noise_dim") and self.args.noise_dim is not None:
+                self._log_noise_returns(test_mode, test_uniform)
+ 
             if hasattr(self.mac.action_selector, "epsilon"):
                 self.logger.log_stat("epsilon", self.mac.action_selector.epsilon, self.t_env)
             self.log_train_stats_t = self.t_env
-
+ 
         return self.batch
-
+    
     def _log(self, returns, stats, prefix):
         self.logger.log_stat(prefix + "return_mean", np.mean(returns), self.t_env)
         self.logger.log_stat(prefix + "return_std", np.std(returns), self.t_env)
@@ -495,3 +509,4 @@ class CloudpickleWrapper:
     def __setstate__(self, ob):
         import pickle
         self.x = pickle.loads(ob)
+

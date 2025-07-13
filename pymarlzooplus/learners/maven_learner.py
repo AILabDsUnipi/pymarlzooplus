@@ -49,10 +49,13 @@ class MavenLearner:
 
     def train(self, batch: EpisodeBatch, t_env: int, episode_num: int):
         # Enable anomaly detection (optional but useful during debugging)
+        # th.autograd.set_detect_anomaly(True)
+
+        # Get the relevant quantities
         rewards = batch["reward"][:, :-1]
         actions = batch["actions"][:, :-1]
         terminated = batch["terminated"][:, :-1].float()
-        mask = batch["filled"][:, :-1].float().clone()
+        mask = batch["filled"][:, :-1].float().clone() 
         mask[:, 1:] = mask[:, 1:] * (1 - terminated[:, :-1])
         avail_actions = batch["avail_actions"]
         noise = batch["noise"][:, 0].unsqueeze(1).repeat(1, rewards.shape[1], 1)
@@ -63,10 +66,10 @@ class MavenLearner:
         for t in range(batch.max_seq_length):
             agent_outs = self.mac.forward(batch, t=t)
             mac_out.append(agent_outs)
-        mac_out = th.stack(mac_out, dim=1)
+        mac_out = th.stack(mac_out, dim=1)  # Concat over time
 
         # Pick the Q-Values for the actions taken by each agent
-        chosen_action_qvals = th.gather(mac_out[:, :-1], dim=3, index=actions).squeeze(3)  # Remove the last dim
+        chosen_action_qvals = th.gather(mac_out[:, :-1], dim=3, index=actions).squeeze(3)
 
         # Calculate the Q-Values necessary for the target
         target_mac_out = []
@@ -74,17 +77,15 @@ class MavenLearner:
         for t in range(batch.max_seq_length):
             target_agent_outs = self.target_mac.forward(batch, t=t)
             target_mac_out.append(target_agent_outs)
-            
-        # We don't need the first timesteps Q-Value estimate for calculating targets
-        target_mac_out = th.stack(target_mac_out[1:], dim=1)
+        target_mac_out = th.stack(target_mac_out[1:], dim=1)  # Skip first timestep
 
         # Mask out unavailable actions
-        target_mac_out = target_mac_out.clone()
-        target_mac_out[avail_actions[:, 1:] == 0] = -9999999 # From OG deepmarl
+        target_mac_out = target_mac_out.clone() 
+        target_mac_out[avail_actions[:, 1:] == 0] = -9999999
 
         # Max over target Q-Values
         if self.args.double_q:
-            mac_out = mac_out.clone()
+            mac_out = mac_out.clone() 
             mac_out[avail_actions == 0] = -9999999
             cur_max_actions = mac_out[:, 1:].max(dim=3, keepdim=True)[1]
             target_max_qvals = th.gather(target_mac_out, 3, cur_max_actions).squeeze(3)
@@ -97,14 +98,14 @@ class MavenLearner:
             target_max_qvals = self.target_mixer(target_max_qvals, batch["state"][:, 1:], noise)
 
         # Discriminator
-        mac_out = mac_out.clone()
+        mac_out = mac_out.clone() 
         mac_out[avail_actions == 0] = -9999999
         q_softmax_actions = th.nn.functional.softmax(mac_out[:, :-1], dim=3)
 
         if self.args.hard_qs:
             maxs = th.max(mac_out[:, :-1], dim=3, keepdim=True)[1]
             zeros = th.zeros_like(q_softmax_actions)
-            q_softmax_actions = zeros.scatter(dim=3, index=maxs, value=1)
+            q_softmax_actions = zeros.scatter(dim=3, index=maxs, value=1) 
 
         q_softmax_agents = q_softmax_actions.reshape(q_softmax_actions.shape[0], q_softmax_actions.shape[1], -1)
 
@@ -118,7 +119,6 @@ class MavenLearner:
                 hs = self.rnn_agg(state_and_softactions[:, t], hs)
                 for b in range(batch.batch_size):
                     if t == batch.max_seq_length - 2 or (mask[b, t] == 1 and mask[b, t + 1] == 0):
-                        # This is the last timestep of the sequence
                         h_to_use[b] = hs[b]
             s_and_softa_reshaped = h_to_use
         else:
@@ -129,7 +129,6 @@ class MavenLearner:
 
         discrim_prediction = self.discrim(s_and_softa_reshaped)
 
-        # Cross-Entropy
         target_repeats = 1
         if not self.args.rnn_discrim:
             target_repeats = q_softmax_actions.shape[1]
@@ -172,7 +171,7 @@ class MavenLearner:
 
         if t_env - self.log_stats_t >= self.args.learner_log_interval:
             self.logger.log_stat("loss", loss.item(), t_env)
-            self.logger.log_stat("grad_norm", grad_norm, t_env)
+            self.logger.log_stat("grad_norm", grad_norm.item(), t_env)
             mask_elems = mask_expanded.sum().item()
             self.logger.log_stat("td_error_abs", (masked_td_error.abs().sum().item() / mask_elems), t_env)
             self.logger.log_stat("q_taken_mean", (chosen_action_qvals * mask_expanded).sum().item() / (mask_elems * self.args.n_agents), t_env)
