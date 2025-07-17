@@ -3,11 +3,9 @@ import torch as th
 import torch.nn as nn
 import math
 
-
 from pymarlzooplus.components.standarize_stream import PopArt
 from pymarlzooplus.modules.critics import REGISTRY as critic_registry
 from pymarlzooplus.components.episode_buffer import EpisodeBatch
-
 
 
 class CommFormerLearner:
@@ -15,8 +13,6 @@ class CommFormerLearner:
 
         self.args = args
         self.logger = logger
-        
-
 
         self.num_agents = args.n_agents
 
@@ -108,11 +104,8 @@ class CommFormerLearner:
         old_action_log_probs_batch = sample["log_probs"].view(-1, 1)
         adv_targ = sample["advantages"].view(-1, 1)
 
-        values, action_log_probs, dist_entropy = self.mac.evaluate_actions(sample, t=0, steps=steps, total_step=total_step)
-
-        
-
-
+        values, action_log_probs, dist_entropy = self.mac.evaluate_actions(sample, t=0, steps=steps,
+                                                                           total_step=total_step)
 
         imp_weights = th.exp(action_log_probs - old_action_log_probs_batch)
         surr1 = imp_weights * adv_targ
@@ -124,7 +117,8 @@ class CommFormerLearner:
         loss = policy_loss - dist_entropy * self.entropy_coef + value_loss * self.value_loss_coef
 
         if self.use_bilevel:
-            if (index + 1) % 5 == 0 and ((self.post_stable and steps <= int(self.post_ratio * total_step)) or not self.post_stable):
+            if (index + 1) % 5 == 0 and (
+                    (self.post_stable and steps <= int(self.post_ratio * total_step)) or not self.post_stable):
                 self.edge_optimizer.zero_grad()
             else:
                 self.optimizer.zero_grad()
@@ -140,7 +134,8 @@ class CommFormerLearner:
             grad_norm = self.get_grad_norm(self.actor_params)
 
         if self.use_bilevel:
-            if (index + 1) % 5 == 0 and ((self.post_stable and steps <= int(self.post_ratio * total_step)) or not self.post_stable):
+            if (index + 1) % 5 == 0 and (
+                    (self.post_stable and steps <= int(self.post_ratio * total_step)) or not self.post_stable):
                 self.edge_optimizer.step()
             else:
                 self.optimizer.step()
@@ -152,8 +147,6 @@ class CommFormerLearner:
         train_stats["policy_loss"].append(policy_loss.item())
         train_stats["entropy"].append(dist_entropy.item())
         train_stats["ratio"].append(imp_weights.mean().item())
-
-      
 
 
         return train_stats
@@ -173,7 +166,8 @@ class CommFormerLearner:
             sampler = [rand[i * mini_batch_size:(i + 1) * mini_batch_size] for i in range(self.num_mini_batch)]
             for indices in sampler:
                 mini_batch = self.create_mini_batch(batch, returns, advantages, indices, mini_batch_size)
-                train_stats = self.ppo_update(mini_batch, train_stats, steps=self.training_steps, index=step_idx, total_step=self.args.t_max)
+                train_stats = self.ppo_update(mini_batch, train_stats, steps=self.training_steps, index=step_idx,
+                                              total_step=self.args.t_max)
                 step_idx += 1
                 self.training_steps += 1
 
@@ -220,12 +214,16 @@ class CommFormerLearner:
         values = batch["values"]
 
         for step in reversed(range(rewards.shape[1])):
-            delta = rewards[:, step] + self.gamma * self.value_normalizer.denormalize(values[:, step + 1]) * mask[:, step] - self.value_normalizer.denormalize(values[:, step])
+            if self.use_popart:
+                next_value = self.value_normalizer.denormalize(values[:, step + 1])
+                current_value = self.value_normalizer.denormalize(values[:, step])
+            else:
+                next_value = values[:, step + 1]
+                current_value = values[:, step]
+
+            delta = rewards[:, step] + self.gamma * next_value * mask[:, step] - current_value
             gae = delta + self.gamma * self.gae_lambda * mask[:, step] * gae
-            returns[:, step] = gae + self.value_normalizer.denormalize(values[:, step])
-
-       
-
+            returns[:, step] = gae + current_value
 
         return returns
 
@@ -235,13 +233,22 @@ class CommFormerLearner:
         mask[:, 1:] = mask[:, 1:] * (1 - terminated[:, :-1])
         mask = mask[..., None].repeat(1, 1, self.num_agents, 1)
         values = batch["values"]
-        advantages = returns - self.value_normalizer.denormalize(values[:, :-1])
+
+
+        if self.use_popart:
+            value_baseline = self.value_normalizer.denormalize(values[:, :-1])
+        else:
+            value_baseline = values[:, :-1]
+
+        advantages = returns - value_baseline
+
 
         advantages_copy = advantages.clone().detach().cpu().numpy()
         advantages_copy[mask.detach().cpu().numpy() == 0.0] = np.nan
         mean_advantages = th.from_numpy(np.nanmean(advantages_copy, keepdims=True)).to(self.device)
         std_advantages = th.from_numpy(np.nanstd(advantages_copy, keepdims=True)).to(self.device)
         advantages = (advantages - mean_advantages) / (std_advantages + 1e-5)
+
         return advantages
 
     @staticmethod

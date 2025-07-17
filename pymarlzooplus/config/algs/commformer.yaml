@@ -1,14 +1,14 @@
 # --- specific parameters ---
 
 sparsity: 0.4
-warmup: 10
+warmup: 1000000
 
 action_selector: "soft_policies"
 mask_before_softmax: True                           
 
 runner: "parallel"
 
-buffer_size: 10
+buffer_size: 32
 batch_size_run: 10
 batch_size: 32
 
@@ -27,10 +27,10 @@ use_rnn: False  # Should be False
 standardise_returns: False  # Should be False
 standardise_rewards: False  # Should be False
 critic_type: "commformer_critic"
-name: "mat_dec"
+name: "commformer"
 
 #     network parameters
-use_popart: True                       # help="by default False, use PopArt to normalize rewards."
+use_popart: False                      # help="by default False, use PopArt to normalize rewards."
 
 #     optimizer parameters
 lr: 5e-4

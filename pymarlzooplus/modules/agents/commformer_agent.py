@@ -7,6 +7,7 @@ from torch.distributions import Categorical
 
 
 class RelationMultiheadAttention(nn.Module):
+
     def __init__(self, embed_dim, num_heads, n_agent, dropout=0., weights_dropout=False,
                  masked=False, self_loop_add=True):
         super().__init__()
@@ -31,6 +32,7 @@ class RelationMultiheadAttention(nn.Module):
         nn.init.normal_(self.in_proj_weight, std=0.02)
         nn.init.normal_(self.out_proj.weight, std=0.02)
         nn.init.normal_(self.relation_in_proj.weight, std=0.02)
+        nn.init.constant_(self.relation_in_proj.bias, 0.0)
         nn.init.constant_(self.in_proj_bias, 0.)
         nn.init.constant_(self.out_proj.bias, 0.)
 
@@ -131,13 +133,22 @@ class GraphTransformerLayer(nn.Module):
         self.attn_layer_norm = nn.LayerNorm(embed_dim)
         self.ff_layer_norm = nn.LayerNorm(embed_dim)
         self.dropout = dropout
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        nn.init.normal_(self.fc1.weight, std=0.02)
+        nn.init.normal_(self.fc2.weight, std=0.02)
+        nn.init.constant_(self.fc1.bias, 0.0)
+        nn.init.constant_(self.fc2.bias, 0.0)
 
     def forward(self, x, relation, kv=None, attn_mask=None, need_weights=False, dec_agent=False):
         residual = x
         if kv is None:
-            x, _ = self.self_attn(x, x, x, relation, attn_mask=attn_mask, need_weights=need_weights, dec_agent=dec_agent)
+            x, _ = self.self_attn(x, x, x, relation, attn_mask=attn_mask, need_weights=need_weights,
+                                  dec_agent=dec_agent)
         else:
-            x, _ = self.self_attn(x, kv, kv, relation, attn_mask=attn_mask, need_weights=need_weights, dec_agent=dec_agent)
+            x, _ = self.self_attn(x, kv, kv, relation, attn_mask=attn_mask, need_weights=need_weights,
+                                  dec_agent=dec_agent)
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.attn_layer_norm(residual + x)
 
@@ -194,7 +205,8 @@ class Decoder(nn.Module):
         self.obs_encoder = nn.Sequential(nn.LayerNorm(obs_dim), nn.Linear(obs_dim, n_embd), nn.GELU())
         self.ln = nn.LayerNorm(n_embd)
         self.blocks = nn.Sequential(*[DecodeBlock(n_embd, n_head, n_agent, self_loop_add) for _ in range(n_block)])
-        self.head = nn.Sequential(nn.Linear(n_embd, n_embd), nn.GELU(), nn.LayerNorm(n_embd), nn.Linear(n_embd, action_dim))
+        self.head = nn.Sequential(nn.Linear(n_embd, n_embd), nn.GELU(), nn.LayerNorm(n_embd),
+                                  nn.Linear(n_embd, action_dim))
 
     def forward(self, action, obs_rep, obs, relation_embed, attn_mask, dec_agent):
         action_embeddings = self.action_encoder(action)
@@ -262,13 +274,15 @@ class CommFormerAgent(nn.Module):
             relations = relations - y_soft.detach() + y_soft
         return relations
 
-    def discrete_autoregreesive_act(self, obs_rep, obs, relations_embed, relations, batch_size, available_actions=None, deterministic=False, dec_agent=False):
+    def discrete_autoregreesive_act(self, obs_rep, obs, relations_embed, relations, batch_size, available_actions=None,
+                                    deterministic=False, dec_agent=False):
         shifted_action = torch.zeros((batch_size, self.n_agent, self.action_dim + 1), device=obs_rep.device)
         shifted_action[:, 0, 0] = 1
         output_action = torch.zeros((batch_size, self.n_agent, 1), dtype=torch.long, device=obs_rep.device)
         output_action_log = torch.zeros_like(output_action, dtype=torch.float32)
         for i in range(self.n_agent):
-            logit = self.decoder(shifted_action, obs_rep, obs, relations_embed, attn_mask=relations, dec_agent=dec_agent)[:, i, :]
+            logit = self.decoder(shifted_action, obs_rep, obs, relations_embed, attn_mask=relations,
+                                 dec_agent=dec_agent)[:, i, :]
             if available_actions is not None:
                 logit[available_actions[:, i, :] == 0] = -1e10
             distri = Categorical(logits=logit)
@@ -280,7 +294,8 @@ class CommFormerAgent(nn.Module):
                 shifted_action[:, i + 1, 1:] = F.one_hot(action, num_classes=self.action_dim)
         return output_action, output_action_log
 
-    def discrete_parallel_act(self, obs_rep, obs, action, relation_embed, relations, batch_size, available_actions=None, dec_agent=False):
+    def discrete_parallel_act(self, obs_rep, obs, action, relation_embed, relations, batch_size, available_actions=None,
+                              dec_agent=False):
         one_hot_action = F.one_hot(action.squeeze(-1), num_classes=self.action_dim)
         shifted_action = torch.zeros((batch_size, self.n_agent, self.action_dim + 1), device=obs_rep.device)
         shifted_action[:, 0, 0] = 1
@@ -293,7 +308,7 @@ class CommFormerAgent(nn.Module):
         entropy = distri.entropy().unsqueeze(-1)
         return action_log, entropy
 
-    def forward(self,obs_rep, obs, action, available_actions=None, steps=0, total_step=0):
+    def forward(self, obs_rep, obs, action, available_actions=None, steps=0, total_step=0):
         action = action.long()
         if steps > self.warmup:
             relations = self.edge_return()
@@ -303,7 +318,8 @@ class CommFormerAgent(nn.Module):
             relations = self.edge_return(exact=True)
         relations = relations.unsqueeze(0)
         relations_embed = self.edges_embed(relations.long()).repeat(obs.size(0), 1, 1, 1)
-        action_log, entropy = self.discrete_parallel_act(obs_rep, obs, action, relations_embed, relations, obs.size(0), available_actions)
+        action_log, entropy = self.discrete_parallel_act(obs_rep, obs, action, relations_embed, relations, obs.size(0),
+                                                         available_actions)
         return action_log, entropy
 
     def get_actions(self, ep_batch, t, obs, available_actions=None, deterministic=False):
@@ -313,8 +329,10 @@ class CommFormerAgent(nn.Module):
         relations = relations.unsqueeze(0)
         relations_embed = self.edges_embed(relations.long())
         relations_embed = relations_embed.repeat(batch_size, 1, 1, 1)
-        output_action, output_action_log = self.discrete_autoregreesive_act(obs_rep, obs, relations_embed, relations, batch_size, available_actions, deterministic)
-        
+        output_action, output_action_log = self.discrete_autoregreesive_act(obs_rep, obs, relations_embed, relations,
+                                                                            batch_size, available_actions,
+                                                                            deterministic)
+
         return output_action, output_action_log, v_loc
 
     def get_values(self, obs):
