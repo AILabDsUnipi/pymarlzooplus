@@ -22,30 +22,20 @@ learner: "maven_learner"
 double_q: True
 mixer: "maven"
 mixing_embed_dim: 32
-skip_connections: False
-hyper_initialization_nonzeros: 0
-
-mi_intrinsic: False
-mi_scaler: 0.1
-hard_qs: False
 
 mac: "maven_mac"
 agent: "rnn_maven"
-noise_dim: 2
+noise_dim: 16
 noise_embedding_dim: 32
-rnn_discrim: False
 
-mi_loss: 1
+mi_loss: 0.001
 
 discrim_size: 32
-discrim_layers: 1
-
-bandit_policy: True
-noise_bandit: False
+discrim_layers: 2
+rnn_agg_size: 32
 
 entropy_scaling: 0.001
 bandit_buffer: 512
-bandit_epsilon: 0.1
 bandit_iters: 8
 bandit_batch: 64
 

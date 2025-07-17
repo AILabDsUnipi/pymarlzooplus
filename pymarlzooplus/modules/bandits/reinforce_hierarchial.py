@@ -65,7 +65,6 @@ class EZ_agent:
         self.uniform_distrib = torch.distributions.one_hot_categorical.OneHotCategorical(torch.tensor([1/self.args.noise_dim for _ in range(self.args.noise_dim)]).repeat(self.args.batch_size_run, 1))
 
         self.buffer = deque(maxlen=self.args.bandit_buffer)
-        self.epsilon_floor = args.bandit_epsilon
 
         self.logger = logger
 

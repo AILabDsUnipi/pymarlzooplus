@@ -124,13 +124,7 @@ class ParallelRunner:
             if not hasattr(self, "noise_test_won"): self.noise_test_won = {}
             if not hasattr(self, "noise_train_won"): self.noise_train_won = {}
 
-            if self.args.noise_bandit:
-                if self.args.bandit_policy:
-                    self.noise_distrib = enza(self.args, logger=self.logger)
-                else:
-                    self.noise_distrib = RBandit(self.args, logger=self.logger)
-            else:
-               self.noise_distrib = Uniform(self.args)
+            self.noise_distrib = enza(self.args, logger=self.logger)
                
     def get_env_info(self):
         return self.env_info

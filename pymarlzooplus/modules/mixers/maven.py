@@ -17,19 +17,6 @@ class MavenMixer(nn.Module):
         self.hyper_w_1 = nn.Linear(self.state_dim, self.embed_dim * self.n_agents)
         self.hyper_w_final = nn.Linear(self.state_dim, self.embed_dim)
 
-        # Initialise the hyper networks with a fixed variance, if specified
-        if self.args.hyper_initialization_nonzeros > 0:
-            std = self.args.hyper_initialization_nonzeros ** -0.5
-            self.hyper_w_1.weight.data.normal_(std=std)
-            self.hyper_w_1.bias.data.normal_(std=std)
-            self.hyper_w_final.weight.data.normal_(std=std)
-            self.hyper_w_final.bias.data.normal_(std=std)
-
-        # Initialise the hyper-network of the skip-connections, such that the result is close to VDN
-        if self.args.skip_connections:
-            self.skip_connections = nn.Linear(self.state_dim, self.args.n_agents, bias=True)
-            self.skip_connections.bias.data.fill_(1.0)  # bias produces initial VDN weights
-
         # State dependent bias for hidden layer
         self.hyper_b_1 = nn.Linear(self.state_dim, self.embed_dim)
 
@@ -56,9 +43,6 @@ class MavenMixer(nn.Module):
         v = self.V(states).view(-1, 1, 1)
         # Skip connections
         s = 0
-        if self.args.skip_connections:
-            ws = th.abs(self.skip_connections(states)).view(-1, self.n_agents, 1)
-            s = th.bmm(agent_qs, ws)
         # Compute final output
         y = th.bmm(hidden, w_final) + v + s
         # Reshape and return
