@@ -5,6 +5,9 @@ class CommFormerMAC(BasicMAC):
     """Controller for CommFormer agent."""
     def __init__(self, scheme, groups, args):
         super().__init__(scheme, groups, args)
+
+        assert not self.args.obs_agent_id, "obs_agent_id must be False for CommFormer"
+        assert not self.args.obs_last_action, "obs_last_action must be False for CommFormer"
         self.n_agents = args.n_agents
         self.input_shape = self.agent.input_shape
         self.n_actions = args.n_actions

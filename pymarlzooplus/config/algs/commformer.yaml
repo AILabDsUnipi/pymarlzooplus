@@ -2,20 +2,25 @@
 
 sparsity: 0.4
 warmup: 1000000
+post_stable: False
+post_ratio: 0.4
+
+dec_agent: True
+share_actor: False
 
 action_selector: "soft_policies"
 mask_before_softmax: True                           
 
 runner: "parallel"
 
-buffer_size: 32
+buffer_size: 16
 batch_size_run: 10
-batch_size: 32
+batch_size: 16
 
 # update the target network every {} training steps
 target_update_interval_or_tau: 200
 
-obs_agent_id: True
+obs_agent_id: False
 obs_last_action: False # It should be False
 obs_individual_obs: True                           
 
