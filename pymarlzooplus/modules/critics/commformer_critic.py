@@ -92,15 +92,17 @@ class CommFormerCritic(nn.Module):
     def edge_parameters(self):
         return [self.edges]
 
-    def forward(self, batch, t=None):
+    def forward(self, batch, t=None, steps=None, total_step=None):
         inputs, bs, max_t = self._build_inputs(batch, t)
         inputs = inputs.reshape(-1, self.n_agents, self.input_shape)
-        relations = self.edge_return(exact=True)
+
+        relations = self.edge_return(steps=steps, total_step=total_step)
         relations = relations.unsqueeze(0)
-        relations_embed = self.edges_embed(relations.long())
-        relations_embed = relations_embed.repeat(inputs.size(0), 1, 1, 1)
+        relations_embed = self.edges_embed(relations.long()).repeat(inputs.size(0), 1, 1, 1)
+
         v, obs_rep = self.encoder(inputs, relations_embed, relations, dec_agent=self.dec_agent)
-        return v, obs_rep
+
+        return v, obs_rep, relations, relations_embed
 
     def edge_return(self, exact=False, topk=-1, steps=None, total_step=None):
         # Warmup and post-stable logic

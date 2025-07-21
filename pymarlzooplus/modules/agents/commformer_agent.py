@@ -345,40 +345,31 @@ class CommFormerAgent(nn.Module):
         entropy = distri.entropy().unsqueeze(-1)
         return action_log, entropy
 
-    def forward(self, obs_rep, obs, action, available_actions=None, steps=0, total_step=0):
-        relations = self.critic.edge_return(steps=steps, total_step=total_step)
-        relations = relations.unsqueeze(0)
-        relations_embed = self.critic.edges_embed(relations.long()).repeat(obs.size(0), 1, 1, 1)
-
+    def forward(self, obs_rep, obs, action, available_actions, relations, relations_embed):
         action_log, entropy = self.discrete_parallel_act(
             obs_rep, obs, action, relations_embed, relations, obs.size(0), available_actions
         )
         return action_log, entropy
 
     def get_actions(self, ep_batch, t, obs, available_actions=None, deterministic=False):
-
         batch_size = np.shape(obs)[0]
-        v_loc, obs_rep = self.critic(ep_batch, t)
-
-        relations = self.critic.edge_return(exact=True)
-        relations = relations.unsqueeze(0)
-        relations_embed = self.critic.edges_embed(relations.long()).repeat(batch_size, 1, 1, 1)
+        v_loc, obs_rep, relations, relations_embed = self.critic(ep_batch, t)
 
         output_action, output_action_log = self.discrete_autoregreesive_act(
             obs_rep, obs, relations_embed, relations, batch_size, available_actions, deterministic
         )
 
-        return output_action, output_action_log,v_loc
+        return output_action, output_action_log, v_loc
 
     def get_values(self, obs):
         v_tot = self.critic(obs)
         return v_tot
 
     def evaluate_actions(self, ep_batch, t, agent_inputs, actions, available_actions, steps=0, total_step=0):
-        v_loc, obs_rep = self.critic(ep_batch, t)
+        v_loc, obs_rep, relations, relations_embed = self.critic(ep_batch, t, steps=steps, total_step=total_step)
 
         action_log, entropy = self.forward(
-            obs_rep, agent_inputs, actions, available_actions, steps=steps, total_step=total_step
+            obs_rep, agent_inputs, actions, available_actions, relations, relations_embed
         )
 
         return action_log, v_loc, entropy
