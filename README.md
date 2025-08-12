@@ -1,4 +1,4 @@
-# PyMARLzoo+
+# PyMARLzoo+ (AAMAS 2025)
 ![Python Versions](https://img.shields.io/badge/Python-3.8%20%7C%203.9%20%7C%203.10%20%7C%203.11-blue)
 [![Tests](https://github.com/AILabDsUnipi/pymarlzooplus/actions/workflows/test.yml/badge.svg)](https://github.com/AILabDsUnipi/pymarlzooplus/actions/workflows/test.yml)
 ![GitHub License](https://img.shields.io/github/license/AILabDsUnipi/pymarlzooplus)
