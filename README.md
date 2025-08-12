@@ -41,7 +41,7 @@ Algorithms (9) maintained from EPyMARL:
 - IA2C
 
 If you find PyMARLzoo+ useful or use PyMARLzoo+  in your research, please cite it in your publications.
-```bibtex
+```
 @inproceedings{10.5555/3709347.3743796,
 author = {Papadopoulos, George and Kontogiannis, Andreas and Papadopoulou, Foteini and Poulianou, Chaido and Koumentis, Ioannis and Vouros, George},
 title = {An Extended Benchmarking of Multi-Agent Reinforcement Learning Algorithms in Complex Fully Cooperative Tasks},
