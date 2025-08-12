@@ -42,12 +42,20 @@ Algorithms (9) maintained from EPyMARL:
 
 If you find PyMARLzoo+ useful or use PyMARLzoo+  in your research, please cite it in your publications.
 ```bibtex
-@inproceedings{papadopoulos2025extended,
-  title={An Extended Benchmarking of Multi-Agent Reinforcement Learning Algorithms in Complex Fully Cooperative Tasks},
-  author={Papadopoulos, George and Kontogiannis, Andreas and Papadopoulou, Foteini and Poulianou, Chaido and Koumentis, Ioannis and Vouros, George},
-  booktitle={Proceedings of the 24th International Conference on Autonomous Agents and Multiagent Systems},
-  pages={1613--1622},
-  year={2025}
+@inproceedings{10.5555/3709347.3743796,
+author = {Papadopoulos, George and Kontogiannis, Andreas and Papadopoulou, Foteini and Poulianou, Chaido and Koumentis, Ioannis and Vouros, George},
+title = {An Extended Benchmarking of Multi-Agent Reinforcement Learning Algorithms in Complex Fully Cooperative Tasks},
+year = {2025},
+isbn = {9798400714269},
+publisher = {International Foundation for Autonomous Agents and Multiagent Systems},
+address = {Richland, SC},
+abstract = {Multi-Agent Reinforcement Learning (MARL) has recently emerged as a significant area of research. However, MARL evaluation often lacks systematic diversity, hindering a comprehensive understanding of algorithms' capabilities. In particular, cooperative MARL algorithms are predominantly evaluated on benchmarks such as SMAC and GRF, which primarily feature team game scenarios without assessing adequately various aspects of agents' capabilities required in fully cooperative real-world tasks such as multi-robot cooperation and warehouse, resource management, search and rescue, and human-AI cooperation. Moreover, MARL algorithms are mainly evaluated on low dimensional state spaces, and thus their performance on high-dimensional (e.g., image) observations is not well-studied. To fill this gap, this paper highlights the crucial need for expanding systematic evaluation across a wider array of existing benchmarks. To this end, we conduct extensive evaluation and comparisons of well-known MARL algorithms on complex fully cooperative benchmarks, including tasks with images as agents' observations. Interestingly, our analysis shows that many algorithms, hailed as state-of-the-art on SMAC and GRF, may underperform standard MARL baselines on fully cooperative benchmarks. Finally, towards more systematic and better evaluation of cooperative MARL algorithms, we have open-sourced PyMARLzoo+, an extension of the widely used (E)PyMARL libraries, which addresses an open challenge from[46], facilitating seamless integration and support with all benchmarks of PettingZoo, as well as Overcooked, PressurePlate, Capture Target and Box Pushing.},
+booktitle = {Proceedings of the 24th International Conference on Autonomous Agents and Multiagent Systems},
+pages = {1613–1622},
+numpages = {10},
+keywords = {benchmarking, fully cooperative multi-agent reinforcement learning, image-based observations, open-source framework},
+location = {Detroit, MI, USA},
+series = {AAMAS '25}
 }
 ```
 
