@@ -27,7 +27,7 @@ lbforaging>1.1.1
 
 # For PettingZoo
 torchvision
-albumentations==1.4.18
+albumentations
 transformers
 autorom
 
