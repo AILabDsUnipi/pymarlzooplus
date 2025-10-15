@@ -8,9 +8,19 @@ from torch.distributions import Categorical
 
 class RelationMultiheadAttention(nn.Module):
 
-    def __init__(self, embed_dim, num_heads, n_agent, dropout=0., weights_dropout=False,
-                 masked=False, self_loop_add=True):
+    def __init__(
+            self,
+            embed_dim,
+            num_heads,
+            n_agent,
+            dropout=0.,
+            weights_dropout=False,
+            masked=False,
+            self_loop_add=True
+    ):
+
         super().__init__()
+
         self.embed_dim = embed_dim
         self.num_heads = num_heads
         self.dropout = dropout
@@ -123,11 +133,23 @@ class RelationMultiheadAttention(nn.Module):
 
 
 class GraphTransformerLayer(nn.Module):
-    def __init__(self, embed_dim, ff_embed_dim, num_heads, n_agent, self_loop_add, dropout=0.1,
-                 weights_dropout=False, masked=False):
+    def __init__(
+            self,
+            embed_dim,
+            ff_embed_dim,
+            num_heads,
+            n_agent,
+            self_loop_add,
+            dropout=0.1,
+            weights_dropout=False,
+            masked=False
+    ):
+
         super().__init__()
-        self.self_attn = RelationMultiheadAttention(embed_dim, num_heads, n_agent, dropout,
-                                                    weights_dropout, masked, self_loop_add)
+
+        self.self_attn = RelationMultiheadAttention(
+            embed_dim, num_heads, n_agent, dropout, weights_dropout, masked, self_loop_add
+        )
         self.fc1 = nn.Linear(embed_dim, ff_embed_dim)
         self.fc2 = nn.Linear(ff_embed_dim, embed_dim)
         self.attn_layer_norm = nn.LayerNorm(embed_dim)
@@ -144,11 +166,13 @@ class GraphTransformerLayer(nn.Module):
     def forward(self, x, relation, kv=None, attn_mask=None, need_weights=False, dec_agent=False):
         residual = x
         if kv is None:
-            x, _ = self.self_attn(x, x, x, relation, attn_mask=attn_mask, need_weights=need_weights,
-                                  dec_agent=dec_agent)
+            x, _ = self.self_attn(
+                x, x, x, relation, attn_mask=attn_mask, need_weights=need_weights, dec_agent=dec_agent
+            )
         else:
-            x, _ = self.self_attn(x, kv, kv, relation, attn_mask=attn_mask, need_weights=need_weights,
-                                  dec_agent=dec_agent)
+            x, _ = self.self_attn(
+                x, kv, kv, relation, attn_mask=attn_mask, need_weights=need_weights, dec_agent=dec_agent
+            )
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.attn_layer_norm(residual + x)
 
@@ -163,17 +187,15 @@ class GraphTransformerLayer(nn.Module):
 
 class DecodeBlock(nn.Module):
     def __init__(self, n_embd, n_head, n_agent, self_loop_add):
+
         super().__init__()
+
         self.ln1 = nn.LayerNorm(n_embd)
         self.ln2 = nn.LayerNorm(n_embd)
         self.ln3 = nn.LayerNorm(n_embd)
         self.attn1 = RelationMultiheadAttention(n_embd, n_head, n_agent, masked=True, self_loop_add=self_loop_add)
         self.attn2 = RelationMultiheadAttention(n_embd, n_head, n_agent, masked=True, self_loop_add=self_loop_add)
-        self.mlp = nn.Sequential(
-            nn.Linear(n_embd, n_embd),
-            nn.GELU(),
-            nn.Linear(n_embd, n_embd)
-        )
+        self.mlp = nn.Sequential(nn.Linear(n_embd, n_embd), nn.GELU(), nn.Linear(n_embd, n_embd))
 
     def forward(self, x, rep_enc, relation_embed, attn_mask, dec_agent):
         bs, n_agent, _ = x.shape
@@ -197,17 +219,37 @@ class DecodeBlock(nn.Module):
 
 
 class Decoder(nn.Module):
-    def __init__(self, obs_dim, action_dim, n_block, n_embd, n_head, n_agent, self_loop_add=True,dec_agent=True, share_actor=False):
+    def __init__(
+            self,
+            obs_dim,
+            action_dim,
+            n_block,
+            n_embd,
+            n_head,
+            n_agent,
+            self_loop_add=True,
+            dec_agent=True,
+            share_actor=False
+    ):
+
         super().__init__()
+
         self.action_dim = action_dim
         self.n_embd = n_embd
-        self.dec_agent=dec_agent
-        self.share_actor=share_actor
+        self.dec_agent = dec_agent
+        self.share_actor = share_actor
         self.n_agent = n_agent
 
-        self.action_encoder = nn.Sequential(self.init_(nn.Linear(action_dim + 1, n_embd, bias=False), activate=True),nn.GELU())
+        self.action_encoder = nn.Sequential(
+            self.init_(nn.Linear(action_dim + 1, n_embd, bias=False), activate=True),
+            nn.GELU()
+        )
 
-        self.obs_encoder = nn.Sequential( nn.LayerNorm(obs_dim),self.init_(nn.Linear(obs_dim, n_embd), activate=True),nn.GELU())
+        self.obs_encoder = nn.Sequential(
+            nn.LayerNorm(obs_dim),
+            self.init_(nn.Linear(obs_dim, n_embd), activate=True),
+            nn.GELU()
+        )
 
         self.ln = nn.LayerNorm(n_embd)
 
@@ -261,13 +303,14 @@ class Decoder(nn.Module):
 
         return logit
 
-    def init(self,module, weight_init, bias_init, gain=1):
+    @staticmethod
+    def init(module, weight_init, bias_init, gain=1):
         weight_init(module.weight.data, gain=gain)
         if module.bias is not None:
             bias_init(module.bias.data)
         return module
 
-    def init_(self,m, gain=0.01, activate=False):
+    def init_(self, m, gain=0.01, activate=False):
         if activate:
             gain = nn.init.calculate_gain('relu')
         return self.init(m, nn.init.orthogonal_, lambda x: nn.init.constant_(x, 0), gain=gain)
@@ -288,9 +331,12 @@ def gumbel_softmax_topk(logits, topk=1, tau=1, hard=False, dim=-1):
 
 class CommFormerAgent(nn.Module):
     def __init__(self, input_shape, args):
-        super().__init__()
-        self.args = args
+
         assert isinstance(input_shape, int), "CommFormer does not support image obs for the time being!"
+
+        super().__init__()
+
+        self.args = args
         self.n_agent = args.n_agents
         self.input_shape = input_shape
         self.action_dim = args.n_actions
@@ -298,13 +344,21 @@ class CommFormerAgent(nn.Module):
         self.n_head = args.n_head
         self.n_block = args.n_block
 
-        self.share_actor=args.share_actor
-        self.dec_agent=args.dec_agent
-        self.decoder = Decoder(input_shape, self.action_dim, self.n_block, self.n_embd, self.n_head, self.n_agent,dec_agent=self.dec_agent,share_actor=self.share_actor)
+        self.share_actor = args.share_actor
+        self.dec_agent = args.dec_agent
+        self.decoder = Decoder(
+            input_shape,
+            self.action_dim,
+            self.n_block,
+            self.n_embd,
+            self.n_head,
+            self.n_agent,
+            dec_agent=self.dec_agent,
+            share_actor=self.share_actor
+        )
 
         self.sparsity = args.sparsity
         self.topk = max(int(self.n_agent * self.sparsity), 1)
-
 
         self.critic = None
         self.device = None
@@ -312,9 +366,16 @@ class CommFormerAgent(nn.Module):
     def model_parameters(self):
         return list(self.parameters())
 
-
-    def discrete_autoregreesive_act(self, obs_rep, obs, relations_embed, relations, batch_size, available_actions=None,
-                                    deterministic=False):
+    def discrete_autoregreesive_act(
+            self,
+            obs_rep,
+            obs,
+            relations_embed,
+            relations,
+            batch_size,
+            available_actions=None,
+            deterministic=False
+    ):
         shifted_action = torch.zeros((batch_size, self.n_agent, self.action_dim + 1), device=obs_rep.device)
         shifted_action[:, 0, 0] = 1
         output_action = torch.zeros((batch_size, self.n_agent, 1), dtype=torch.long, device=obs_rep.device)
@@ -332,7 +393,16 @@ class CommFormerAgent(nn.Module):
                 shifted_action[:, i + 1, 1:] = F.one_hot(action, num_classes=self.action_dim)
         return output_action, output_action_log
 
-    def discrete_parallel_act(self, obs_rep, obs, action, relation_embed, relations, batch_size, available_actions=None,):
+    def discrete_parallel_act(
+            self,
+            obs_rep,
+            obs,
+            action,
+            relation_embed,
+            relations,
+            batch_size,
+            available_actions=None
+    ):
         one_hot_action = F.one_hot(action.squeeze(-1), num_classes=self.action_dim)
         shifted_action = torch.zeros((batch_size, self.n_agent, self.action_dim + 1), device=obs_rep.device)
         shifted_action[:, 0, 0] = 1

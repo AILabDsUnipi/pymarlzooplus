@@ -1,19 +1,14 @@
-import numpy as np
 import torch as th
 import torch.nn as nn
-import math
 
-from pymarlzooplus.components.standarize_stream import PopArt
-from pymarlzooplus.modules.critics import REGISTRY as critic_registry
 from pymarlzooplus.components.episode_buffer import EpisodeBatch
 from pymarlzooplus.learners.mat_learner import MATLearner
 
 
-
 class CommFormerLearner(MATLearner):
     def __init__(self, mac, scheme, logger, args):
-        super().__init__(mac, scheme, logger, args)
 
+        super().__init__(mac, scheme, logger, args)
 
         self.edge_lr = float(getattr(args, "edge_lr", 1e-4))
         self.edge_params = self.edge_params = list(self.critic.edge_parameters())
@@ -23,9 +18,6 @@ class CommFormerLearner(MATLearner):
         self.use_bilevel = getattr(args, "use_bilevel", True)
         self.post_stable = args.post_stable
         self.post_ratio = args.post_ratio
-
-
-
 
     def ppo_update(self, sample, train_stats, steps=0, index=0, total_step=0):
         if train_stats is None:
@@ -42,8 +34,9 @@ class CommFormerLearner(MATLearner):
         old_action_log_probs_batch = sample["log_probs"].view(-1, 1)
         adv_targ = sample["advantages"].view(-1, 1)
 
-        values, action_log_probs, dist_entropy = self.mac.evaluate_actions(sample, t=0, steps=steps,
-                                                                           total_step=total_step)
+        values, action_log_probs, dist_entropy = self.mac.evaluate_actions(
+            sample, t=0, steps=steps, total_step=total_step
+        )
 
         imp_weights = th.exp(action_log_probs - old_action_log_probs_batch)
         surr1 = imp_weights * adv_targ
@@ -86,7 +79,6 @@ class CommFormerLearner(MATLearner):
         train_stats["entropy"].append(dist_entropy.item())
         train_stats["ratio"].append(imp_weights.mean().item())
 
-
         return train_stats
 
     def train(self, batch: EpisodeBatch, t_env: int, episode_num: int):
@@ -105,10 +97,10 @@ class CommFormerLearner(MATLearner):
             prepared_data = self.prepare_data(batch, returns, advantages)
             for indices in sampler:
                 mini_batch = self.create_mini_batch(prepared_data, indices, mini_batch_size, 1, batch["device"])
-                train_stats = self.ppo_update(mini_batch, train_stats, steps=t_env, index=step_idx,
-                                              total_step=self.args.t_max)
+                train_stats = self.ppo_update(
+                    mini_batch, train_stats, steps=t_env, index=step_idx, total_step=self.args.t_max
+                )
                 step_idx += 1
-
 
         if t_env - self.log_stats_t >= self.args.learner_log_interval:
             ts_logged = len(train_stats["value_loss"])
@@ -116,5 +108,3 @@ class CommFormerLearner(MATLearner):
                 self.logger.log_stat(key, sum(train_stats[key]) / ts_logged, t_env)
 
         self.prep_rollout()
-
-

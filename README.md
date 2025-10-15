@@ -12,7 +12,7 @@
 
 
 PyMARLzoo+ is an extension of [EPyMARL](https://github.com/uoe-agents/epymarl), and includes
-- Additional (7) algorithms: 
+- Additional (8) algorithms: 
   - HAPPO, 
   - MAT-DEC, 
   - QPLEX, 
@@ -20,6 +20,7 @@ PyMARLzoo+ is an extension of [EPyMARL](https://github.com/uoe-agents/epymarl), 
   - EMC, 
   - MASER, 
   - CDS
+  - CommFormer (integrated by [NickCheliotis](https://github.com/NickCheliotis) and [petrostriantafyllos](https://github.com/petrostriantafyllos), reporting results [here](https://drive.google.com/file/d/1E5UnJcbLyw8Fw8EIgHTmsPEsZ2hhiBxe/view?usp=sharing)) 
 - Support for [PettingZoo](https://github.com/Farama-Foundation/PettingZoo) environments
 - Support for [Overcooked](https://github.com/HumanCompatibleAI/overcooked_ai) environments.
 - Support for [Pressure plate](https://github.com/uoe-agents/pressureplate) environments.
@@ -157,6 +158,7 @@ In the following instructions, ```<algo>``` (or ```"algo"```) can be replaced wi
 - "emc" 
 - "maser" 
 - "cds"
+- "commformer"
 
 You can specify the algorithm arguments:
 - In case of running experiment **from source**, you can edit the corresponding configuration file in [pymarlzooplus/config/algs/](pymarlzooplus/config/algs) and the [pymarlzooplus/config/default.yaml](pymarlzooplus/config/default.yaml).
@@ -730,9 +732,9 @@ Thank you for contributing to the project and helping us improve!
   - MAT_DEC
   - HAPPO
   - QPLEX
+  - CommFormer
 - [ ] Docstrings for all code
-- [ ] Make the code to be more abstract and modular 
-- [x] Publish Docker Image
+- [ ] Make the code to be more abstract and modular
 
 
 # License

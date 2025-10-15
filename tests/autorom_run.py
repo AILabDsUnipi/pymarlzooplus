@@ -1,5 +1,6 @@
 import subprocess
 
+
 def run_autorom_with_auto_yes():
     command = ["AutoROM", "--accept-license"]
     process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
@@ -19,6 +20,7 @@ def run_autorom_with_auto_yes():
     print(stderr)
 
     return process.returncode
+
 
 if __name__ == "__main__":
     return_code = run_autorom_with_auto_yes()

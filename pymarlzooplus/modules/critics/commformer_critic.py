@@ -1,11 +1,7 @@
-import math
-import numpy as np
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from pymarlzooplus.modules.agents.commformer_agent import RelationMultiheadAttention, GraphTransformerLayer
 
-
+from pymarlzooplus.modules.agents.commformer_agent import GraphTransformerLayer
 
 
 class Encoder(nn.Module):
@@ -21,7 +17,8 @@ class Encoder(nn.Module):
         self.ln = nn.LayerNorm(n_embd)
 
         self.blocks = nn.ModuleList(
-            [GraphTransformerLayer(n_embd, n_embd, n_head, n_agent, self_loop_add) for _ in range(n_block)])
+            [GraphTransformerLayer(n_embd, n_embd, n_head, n_agent, self_loop_add) for _ in range(n_block)]
+        )
 
         self.head = nn.Sequential(
             self.init_(nn.Linear(n_embd, n_embd), activate=True),
@@ -42,13 +39,14 @@ class Encoder(nn.Module):
         v = self.head(rep)
         return v, rep
 
-    def init(self,module, weight_init, bias_init, gain=1):
+    @staticmethod
+    def init(module, weight_init, bias_init, gain=1):
         weight_init(module.weight.data, gain=gain)
         if module.bias is not None:
             bias_init(module.bias.data)
         return module
 
-    def init_(self,m, gain=0.01, activate=False):
+    def init_(self, m, gain=0.01, activate=False):
         if activate:
             gain = nn.init.calculate_gain('relu')
         return self.init(m, nn.init.orthogonal_, lambda x: nn.init.constant_(x, 0), gain=gain)
@@ -77,14 +75,13 @@ class CommFormerCritic(nn.Module):
         self.n_block = args.n_block
         self.n_embd = args.n_embd
         self.n_head = args.n_head
-        self.warmup= args.warmup
-        self.post_stable=args.post_stable
-        self.post_ratio=args.post_ratio
+        self.warmup = args.warmup
+        self.post_stable = args.post_stable
+        self.post_ratio = args.post_ratio
         self.dec_agent = args.dec_agent
         self.encoder = Encoder(self.input_shape, self.n_block, self.n_embd, self.n_head, self.n_agents)
         self.edges = nn.Parameter(torch.ones(self.n_agents, self.n_agents), requires_grad=True)
         self.edges_embed = nn.Embedding(2, self.n_embd)
-
 
     def model_parameters(self):
         return [p for name, p in self.named_parameters() if name != "edges"]
@@ -139,6 +136,6 @@ class CommFormerCritic(nn.Module):
         inputs = torch.cat([x.reshape(bs, max_t, self.n_agents, -1) for x in inputs], dim=-1)
         return inputs, bs, max_t
 
-    def _get_input_shape(self, scheme):
-
+    @staticmethod
+    def _get_input_shape(scheme):
         return scheme["obs"]["vshape"]

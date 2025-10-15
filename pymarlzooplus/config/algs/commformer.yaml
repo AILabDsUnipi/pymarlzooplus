@@ -14,7 +14,7 @@ mask_before_softmax: True
 runner: "parallel"
 
 buffer_size: 16
-batch_size_run: 10
+batch_size_run: 16
 batch_size: 16
 
 # update the target network every {} training steps
@@ -39,14 +39,14 @@ use_popart: False                      # help="by default False, use PopArt to n
 
 #     optimizer parameters
 lr: 5e-4
-edge_lr: 5e-4                              # help='learning rate (default: 5e-4)'
+edge_lr: 5e-4                           # help='learning rate (default: 5e-4)'
 opti_eps: 1e-5                          # help='RMSprop optimizer epsilon (default: 1e-5)'
 weight_decay: 0  
 
 #     ppo parameters
 ppo_epoch: 15                           # help='number of ppo epochs (default: 15)'
 use_clipped_value_loss: True            # help="by default, clip loss value. If set, do not clip loss value."
-clip_param: 0.2                         # !!same as eps_clip parameter!! help='ppo clip parameter (default: 0.2)'   # 
+clip_param: 0.2                         # help='ppo clip parameter (default: 0.2)'
 num_mini_batch: 1                       # help='number of batches for ppo (default: 1)'
 entropy_coef: 0.01                      # help='entropy term coefficient (default: 0.01)'
 value_loss_coef: 1                      # help='value loss coefficient (default: 0.5)'
