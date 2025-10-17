@@ -186,8 +186,6 @@ def run_sequential(args, logger):
     explorer = None
     if has_explorer is True:
         explorer = explorer_REGISTRY[args.explorer](scheme, groups, args, env_info["episode_limit"], logger)
-    else:
-        args.explorer = None
 
     # Give runner the scheme
     runner.setup(scheme=scheme, groups=groups, preprocess=preprocess, mac=mac, explorer=explorer)
