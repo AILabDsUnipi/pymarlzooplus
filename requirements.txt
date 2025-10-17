@@ -11,7 +11,7 @@ torch
 scikit-learn
 pyglet==1.5.27
 tqdm
-pettingzoo[all]
+pettingzoo[all]==1.24.3
 
 # For MPE
 seaborn
@@ -27,7 +27,7 @@ lbforaging>1.1.1
 
 # For PettingZoo
 torchvision
-albumentations==1.4.18
+albumentations
 transformers
 autorom
 

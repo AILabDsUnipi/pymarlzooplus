@@ -1,3 +1,5 @@
+import inspect
+
 import numpy as np
 import torch
 from torch import nn
@@ -68,10 +70,10 @@ class ImageEncoder(nn.Module):
                     img_size = 224
                     self.transform = A.Compose([
                         A.LongestMaxSize(max_size=img_size, interpolation=1),  # Resize the longest side to 224
-                        A.PadIfNeeded(min_height=img_size, min_width=img_size, border_mode=0, value=(0, 0, 0)),  # Pad to make the image square
+                        self.make_pad_if_needed(img_size=img_size, border_mode=0, value=(0, 0, 0)),  # Pad to make the image square
                         A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
                         ToTensorV2()
-                                                ])
+                    ])
 
                     # Get the number of features by feeding the model with a dummy input
                     dummy_input = np.ones((1, img_size, img_size, 3), dtype=np.uint8)*255
@@ -145,7 +147,7 @@ class ImageEncoder(nn.Module):
                 img_size = 224
                 self.transform = A.Compose([
                     A.LongestMaxSize(max_size=img_size, interpolation=1),  # Resize the longest side to 224
-                    A.PadIfNeeded(min_height=img_size, min_width=img_size, border_mode=0, value=(0, 0, 0)),  # Pad to make the image square
+                    self.make_pad_if_needed(img_size=img_size, border_mode=0, value=(0, 0, 0)),  # Pad to make the image square
                     ToTensorV2()
                 ])
 
@@ -153,6 +155,24 @@ class ImageEncoder(nn.Module):
                 self.observation_space = (3, img_size, img_size)
             else:
                 raise NotImplementedError()
+
+    @staticmethod
+    def make_pad_if_needed(img_size, border_mode, value):
+
+        import albumentations as A
+
+        params = inspect.signature(A.PadIfNeeded).parameters
+        kwargs = dict(
+            min_height=img_size,
+            min_width=img_size,
+            border_mode=border_mode,
+        )
+        if 'fill' in params:  # Albumentations >= 2.0
+            kwargs['fill'] = value
+        else:  # Albumentations < 2.0
+            kwargs['value'] = value
+
+        return A.PadIfNeeded(**kwargs)
 
     def resnet18_predict(self, observation):
         """
@@ -242,14 +262,17 @@ class ImageEncoder(nn.Module):
                     # Reset tmp
                     observations_tmp = []
                     observations_tmp_counter = 0
+
         elif self.trainable_cnn is True and self.centralized_image_encoding is False:
             # Preprocess images for a CNN network.
             observations_ = [
                 self.transform(image=observation_)["image"].detach().cpu().numpy()
                 for observation_ in observations.values()
             ]
+
         elif self.trainable_cnn is False and self.centralized_image_encoding is True and self.called_from == "env":
             observations_ = [observations]
+
         else:
             raise NotImplementedError()
 

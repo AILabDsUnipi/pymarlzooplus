@@ -178,9 +178,10 @@ class MATLearner:
             rand = th.randperm(batch_size).numpy()
 
             sampler = [rand[i * mini_batch_size:(i + 1) * mini_batch_size] for i in range(self.num_mini_batch)]
+            prepared_data = self.prepare_data(batch, returns, advantages)
 
             for indices in sampler:
-                mini_batch = self.create_mini_batch(batch, returns, advantages, indices, mini_batch_size)
+                mini_batch = self.create_mini_batch(prepared_data, indices, mini_batch_size, 1, batch["device"])
                 train_stats = self.ppo_update(mini_batch, train_stats)
 
         if t_env - self.log_stats_t >= self.args.learner_log_interval:
@@ -217,29 +218,26 @@ class MATLearner:
         return e ** 2 / 2
 
     def compute_returns(self, batch):
-        """
-        Use GAE and value normalizer
-        """
-
         bs = batch.batch_size
-        max_t = batch.max_seq_length-1
+        max_t = batch.max_seq_length - 1
         returns = th.zeros((bs, max_t, self.num_agents, 1), dtype=th.float32, device=self.device)
         gae = 0
 
         rewards = batch["reward"][:, :-1, :, None].repeat(1, 1, self.num_agents, 1)
-        # We use only the 'filled' and not the 'terminated' since the first will still
-        # be True at the last step (and then will be False), while the 'terminated' will
-        # be False at the last step onwards.
         mask = batch["filled"][:, :-1, :, None].float().repeat(1, 1, self.num_agents, 1)
         values = batch["values"]
 
         for step in reversed(range(rewards.shape[1])):
-            delta = (rewards[:, step]
-                     + self.gamma * self.value_normalizer.denormalize(values[:, step + 1]) * mask[:, step]
-                     - self.value_normalizer.denormalize(values[:, step])
-                     )
+            if self.use_popart:
+                next_value = self.value_normalizer.denormalize(values[:, step + 1])
+                current_value = self.value_normalizer.denormalize(values[:, step])
+            else:
+                next_value = values[:, step + 1]
+                current_value = values[:, step]
+
+            delta = rewards[:, step] + self.gamma * next_value * mask[:, step] - current_value
             gae = delta + self.gamma * self.gae_lambda * mask[:, step] * gae
-            returns[:, step] = gae + self.value_normalizer.denormalize(values[:, step])
+            returns[:, step] = gae + current_value
 
         return returns
 
@@ -249,7 +247,16 @@ class MATLearner:
         mask[:, 1:] = mask[:, 1:] * (1 - terminated[:, :-1])
         mask = mask[..., None].repeat(1, 1, self.num_agents, 1)
         values = batch["values"]
-        advantages = returns - self.value_normalizer.denormalize(values[:, :-1])
+
+
+        if self.use_popart:
+            value_baseline = self.value_normalizer.denormalize(values[:, :-1])
+        else:
+            value_baseline = values[:, :-1]
+
+        advantages = returns - value_baseline
+
+
         advantages_copy = advantages.clone().detach().cpu().numpy()
         advantages_copy[mask.detach().cpu().numpy() == 0.0] = np.nan
         mean_advantages = th.from_numpy(np.nanmean(advantages_copy, keepdims=True)).to(self.device)
@@ -259,9 +266,8 @@ class MATLearner:
         return advantages
 
     @staticmethod
-    def create_mini_batch(batch, returns, advantages, indices, mini_batch_size):
-
-        max_ts = batch["max_seq_length"]-1
+    def prepare_data(batch, returns, advantages):
+        max_ts = batch["max_seq_length"] - 1
 
         # [batch, timesteps, n_agents, dim] -->
         # [timesteps, batch, n_agents, dim] -->
@@ -292,25 +298,44 @@ class MATLearner:
         returns = returns.transpose(1, 0).reshape(-1, 1, *returns.shape[2:])
         advantages = advantages.transpose(1, 0).reshape(-1, 1, *advantages.shape[2:])
 
-        mini_batch = {
-            "obs": obs[indices],
-            "state": state[indices],
-            "actions": actions[indices],
-            "actions_onehot": actions_onehot[indices],
-            "avail_actions": avail_actions[indices],
-            "reward": reward[indices],
-            "terminated": terminated[indices],
-            "filled": filled[indices],
-            "mask": mask[indices],
-            "log_probs": log_probs[indices],
-            "values": values[indices],
-            "returns": returns[indices],
-            "advantages": advantages[indices],
-            "max_seq_length": 1,
-            "batch_size": mini_batch_size,
-            "device": batch["device"]
+        prepared_data = {
+            "obs": obs,
+            "state": state,
+            "actions": actions,
+            "actions_onehot": actions_onehot,
+            "avail_actions": avail_actions,
+            "reward": reward,
+            "terminated": terminated,
+            "filled": filled,
+            "mask": mask,
+            "log_probs": log_probs,
+            "values": values,
+            "returns": returns,
+            "advantages": advantages,
         }
+        return prepared_data
 
+    @staticmethod
+    def create_mini_batch(prepared_data, indices, mini_batch_size, max_seq_length, device):
+
+        mini_batch = {
+            "obs": prepared_data["obs"][indices],
+            "state": prepared_data["state"][indices],
+            "actions": prepared_data["actions"][indices],
+            "actions_onehot": prepared_data["actions_onehot"][indices],
+            "avail_actions": prepared_data["avail_actions"][indices],
+            "reward": prepared_data["reward"][indices],
+            "terminated": prepared_data["terminated"][indices],
+            "filled": prepared_data['filled'][indices],
+            "mask": prepared_data["mask"][indices],
+            "log_probs": prepared_data["log_probs"][indices],
+            "values": prepared_data["values"][indices],
+            "returns": prepared_data["returns"][indices],
+            "advantages": prepared_data["advantages"][indices],
+            "max_seq_length": max_seq_length,
+            "batch_size": mini_batch_size,
+            "device": device,
+        }
         return mini_batch
 
     def cuda(self):

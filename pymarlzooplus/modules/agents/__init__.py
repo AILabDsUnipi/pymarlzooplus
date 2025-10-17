@@ -5,6 +5,7 @@ from .rnn_agent_happo import RNNAgentHAPPO
 from .rnn_agent_emc import RNNAgentEMC
 from .rnn_agent_cds import RNNAgentCDS
 from .rnn_maven_agent import RNNAgentMaven
+from .commformer_agent import CommFormerAgent
 
 REGISTRY = {"rnn": RNNAgent,
             "rnn_ns": RNNNSAgent,
@@ -13,6 +14,7 @@ REGISTRY = {"rnn": RNNAgent,
             "rnn_emc": RNNAgentEMC,
             "rnn_cds": RNNAgentCDS,
             "rnn_maven": RNNAgentMaven
+            "commformer_agent": CommFormerAgent
             }
 
 

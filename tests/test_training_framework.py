@@ -1,10 +1,11 @@
 import time
 import traceback
 import unittest
+import argparse
+import sys
 
 from tests.config import algorithms
 from pymarlzooplus import pymarlzooplus
-import argparse, sys
 
 
 parser = argparse.ArgumentParser(add_help=False)
@@ -14,7 +15,7 @@ args, remaining = parser.parse_known_args()
 sys.argv = [sys.argv[0]] + remaining
 FILTER_ALGOS = [a.strip().upper() for a in args.algo.split(',')] if args.algo else None
 FILTER_ENVS = [e.strip().lower() for e in args.env.split(',')] if args.env else None
-ALGO_RAW_IMGS_NOT_SUPPORTED = ["CDS", "MASER", "EMC", "EOI", "MAT-DEC", "HAPPO", "QPLEX", "MAVEN"]
+ALGO_RAW_IMGS_NOT_SUPPORTED = ["CDS", "MASER", "EMC", "EOI", "MAT-DEC", "HAPPO", "QPLEX", "MAVEN", "CommFormer"]
 
 
 def generate_training_configs(env_type, keys, common_args, algo_names, variants=None):
@@ -69,7 +70,9 @@ class TestsTrainingFramework(unittest.TestCase):
 
         partial_obs_variants = {
             "_partial_observation_encoded": {"trainable_cnn": False, "partial_observation": True},
-            "_partial_observation_raw": {"trainable_cnn": True, "partial_observation": True,  "centralized_image_encoding": False},
+            "_partial_observation_raw": {
+                "trainable_cnn": True, "partial_observation": True,  "centralized_image_encoding": False
+            },
         }
         partial_configs = generate_training_configs(
             env_type="pettingzoo",
@@ -132,7 +135,9 @@ class TestsTrainingFramework(unittest.TestCase):
         )
         self.train_framework_params_dict.update(mpe_configs)
 
-        capturetarget_variants = {"": {}, "_obs_one_hot": {"obs_one_hot": True}, "_wo_tgt_avoid_agent": {"tgt_avoid_agent": False}}
+        capturetarget_variants = {
+            "": {}, "_obs_one_hot": {"obs_one_hot": True}, "_wo_tgt_avoid_agent": {"tgt_avoid_agent": False}
+        }
         capturetarget_configs = generate_training_configs(
             env_type="capturetarget",
             keys=["CaptureTarget-6x6-1t-2a-v0"],
@@ -153,15 +158,16 @@ class TestsTrainingFramework(unittest.TestCase):
 
         if FILTER_ALGOS:
             self.train_framework_params_dict = {
-            name: cfg for name, cfg in self.train_framework_params_dict.items()
-                                                            if any(
-            name.endswith(f"_{algo}") or f"_{algo}_" in name for algo in FILTER_ALGOS)
-                                                            }
+                name: cfg for name, cfg in self.train_framework_params_dict.items()
+                if any(
+                    name.endswith(f"_{algo}") or f"_{algo}_" in name for algo in FILTER_ALGOS
+                )
+            }
         if FILTER_ENVS:
             self.train_framework_params_dict = {
                 name: cfg for name, cfg in self.train_framework_params_dict.items()
-                                                            if name.split('_', 1)[0] in FILTER_ENVS
-                                                            }
+                if name.split('_', 1)[0] in FILTER_ENVS
+            }
 
     def test_training_framework(self):
         completed = []
@@ -179,7 +185,11 @@ class TestsTrainingFramework(unittest.TestCase):
                     completed.append(name)
                 except (Exception, SystemExit) as e:
                     tb_str = ''.join(traceback.format_exc())
-                    if "AssertionError" in tb_str and "raw" in name and any(algo in name for algo in ALGO_RAW_IMGS_NOT_SUPPORTED):
+                    if (
+                            "AssertionError" in tb_str and
+                            "raw" in name and
+                            any(algo in name for algo in ALGO_RAW_IMGS_NOT_SUPPORTED)
+                    ):
                         completed.append(name)
                     else:
                         failed[name] = tb_str

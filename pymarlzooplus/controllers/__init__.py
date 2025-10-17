@@ -6,6 +6,7 @@ from .happo_controller import happoMAC
 from .emc_controller import emcMAC
 from .cds_controller import cdsMAC
 from .maven_controller import Maven
+from .commformer_controller import CommFormerMAC
 
 REGISTRY = {"basic_mac": BasicMAC,
             "non_shared_mac": NonSharedMAC,
@@ -15,5 +16,6 @@ REGISTRY = {"basic_mac": BasicMAC,
             "emc_mac": emcMAC,
             "cds_mac": cdsMAC,
             "maven_mac": Maven
+            "commformer_mac": CommFormerMAC
             }
 

@@ -548,4 +548,20 @@ algorithms = {
             "bandit_buffer": 2,
         },
     },
+    "CommFormer": {
+        "config": "commformer",
+        "algo_args": {
+            "test_nepisode": 2,
+            "test_interval": 2,
+            "t_max": 10,
+            "log_interval": 2,
+            "runner_log_interval": 2,
+            "learner_log_interval": 2,
+            "batch_size": 2,
+            "buffer_size": 2,
+            "batch_size_run": 2,
+            "target_update_interval_or_tau": 4,
+            "warmup": 2,
+        },
+    },
 }

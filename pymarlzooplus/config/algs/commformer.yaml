@@ -1,0 +1,67 @@
+# --- specific parameters ---
+
+sparsity: 0.4
+warmup: 1000000
+post_stable: False
+post_ratio: 0.4
+
+dec_agent: True
+share_actor: False
+
+action_selector: "soft_policies"
+mask_before_softmax: True                           
+
+runner: "parallel"
+
+buffer_size: 16
+batch_size_run: 16
+batch_size: 16
+
+# update the target network every {} training steps
+target_update_interval_or_tau: 200
+
+obs_agent_id: False
+obs_last_action: False # It should be False
+obs_individual_obs: True                           
+
+mac: "commformer_mac"
+agent: "commformer_agent"
+agent_output_type: "pi_logits"                      
+learner: "commformer_learner"
+use_rnn: False  # Should be False
+standardise_returns: False  # Should be False
+standardise_rewards: False  # Should be False
+critic_type: "commformer_critic"
+name: "commformer"
+
+#     network parameters
+use_popart: False                      # help="by default False, use PopArt to normalize rewards."
+
+#     optimizer parameters
+lr: 5e-4
+edge_lr: 5e-4                           # help='learning rate (default: 5e-4)'
+opti_eps: 1e-5                          # help='RMSprop optimizer epsilon (default: 1e-5)'
+weight_decay: 0  
+
+#     ppo parameters
+ppo_epoch: 15                           # help='number of ppo epochs (default: 15)'
+use_clipped_value_loss: True            # help="by default, clip loss value. If set, do not clip loss value."
+clip_param: 0.2                         # help='ppo clip parameter (default: 0.2)'
+num_mini_batch: 1                       # help='number of batches for ppo (default: 1)'
+entropy_coef: 0.01                      # help='entropy term coefficient (default: 0.01)'
+value_loss_coef: 1                      # help='value loss coefficient (default: 0.5)'
+use_max_grad_norm: True                 # help="by default, use max norm of gradients. If set, do not use."
+max_grad_norm: 10.0                     # help='max norm of gradients (default: 0.5)'
+use_gae: True                           # help='use generalized advantage estimation'
+gamma: 0.99                             # help='discount factor for rewards (default: 0.99)'
+gae_lambda: 0.95                        # help='gae lambda parameter (default: 0.95)'
+use_huber_loss: True                    # help="by default, use huber loss. If set, do not use huber loss."
+huber_delta: 10.0                       # help=" coefficience of huber loss."
+
+# transformer
+n_block: 1
+n_embd: 64
+n_head: 1
+
+# buffer
+extra_in_buffer: ["log_probs", "values"]
