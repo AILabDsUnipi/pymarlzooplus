@@ -11,7 +11,7 @@ test_interval: 50000
 log_interval: 50000
 runner_log_interval: 10000
 learner_log_interval: 10000
-t_max: 40050000
+t_max: 10000000
 
 # RWARE version 1
 # RUN: python3 pymarlzooplus/main.py --config=qmix --env-config=gymma with env_args.time_limit=500 env_args.key="rware:rware-tiny-2ag-hard-v1"

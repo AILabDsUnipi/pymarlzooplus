@@ -41,6 +41,7 @@ def run(_run, _config, _log):
     args = SN(**_config)
     args.device = "cuda" if args.use_cuda else "cpu"
     args.device_cnn_modules = "cuda" if args.use_cuda_cnn_modules else "cpu"
+    args.results_path = results_dir
 
     # setup loggers
     logger = Logger(_log)
@@ -128,6 +129,10 @@ def run_sequential(args, logger):
         "reward": {"vshape": (1,)},
         "terminated": {"vshape": (1,), "dtype": th.uint8},
     }
+    # In the case of MAVEN, we need to add the noise vector dimension to the scheme
+    if args.has_explorer is True and args.explorer == 'maven':
+        scheme["noise"] = {"vshape": (args.noise_dim,)}
+        
     groups = {"agents": args.n_agents}
     preprocess = {"actions": ("actions_onehot", [OneHot(out_dim=args.n_actions)])}
 
@@ -179,8 +184,8 @@ def run_sequential(args, logger):
     # Setup the explorer, if applicable
     has_explorer = args.has_explorer
     explorer = None
-    if args.has_explorer is True:
-        explorer = explorer_REGISTRY[args.explorer](scheme, groups, args, env_info["episode_limit"])
+    if has_explorer is True:
+        explorer = explorer_REGISTRY[args.explorer](scheme, groups, args, env_info["episode_limit"], logger)
 
     # Give runner the scheme
     runner.setup(scheme=scheme, groups=groups, preprocess=preprocess, mac=mac, explorer=explorer)
@@ -220,6 +225,8 @@ def run_sequential(args, logger):
 
         logger.console_logger.info("Loading model from {}".format(model_path))
         learner.load_models(model_path)
+        if has_explorer is True:
+            explorer.load_models(model_path)
         runner.t_env = timestep_to_load
 
         if args.evaluate or args.save_replay:
@@ -244,9 +251,13 @@ def run_sequential(args, logger):
     while runner.t_env <= args.t_max:
 
         # Run for a whole episode at a time
-        episode_batch = runner.run(test_mode=False)
+        episode_batch, episode_return = runner.run(test_mode=False)
 
-        # Update episode buffer
+        # In the case of MAVEN, train the explorer.
+        if args.explorer == 'maven':
+            explorer.train(episode_batch['state'][:, 0], episode_batch['noise'][:, 0], episode_return, runner.t_env)
+
+        # Update Episodic Memory
         if args.use_emdqn is True:
             ec_buffer.update_ec(episode_batch)
 
@@ -261,8 +272,8 @@ def run_sequential(args, logger):
                 else:
                     episode_sample = buffer.sample(args.batch_size)
 
-                # Train explorer. This is for EOI and CDS.
-                if has_explorer is True:
+                # In the case of EOI, train the explorer.
+                if args.explorer == 'eoi':
                     explorer.train(episode_sample)
 
                 # Truncate batch to only filled timesteps
@@ -273,14 +284,14 @@ def run_sequential(args, logger):
                     episode_sample.to(args.device)
 
                 # Learner training
-                if args.prioritized_buffer is True:
-                    if args.use_emdqn is True:
+                if args.prioritized_buffer is True:  # Prioritized Experience Replay Buffer
+                    if args.use_emdqn is True:  # Episodic Memory
                         learner.train(episode_sample, runner.t_env, episode, ec_buffer=ec_buffer)
                     else:
                         td_error = learner.train(episode_sample, runner.t_env, episode)
                         buffer.update_priority(sample_indices, td_error)
-                else:
-                    if args.use_emdqn is True:
+                else:  # Regular Experience Replay Buffer
+                    if args.use_emdqn is True:  # Episodic Memory
                         learner.train(episode_sample, runner.t_env, episode, ec_buffer=ec_buffer)
                     else:
                         learner.train(episode_sample, runner.t_env, episode)
@@ -306,18 +317,20 @@ def run_sequential(args, logger):
 
         if args.save_model and (
             runner.t_env - model_save_time >= args.save_model_interval
-            or model_save_time == 0
+            or model_save_time == 0  # First episode
+            or runner.t_env > args.t_max  # Last episode
         ):
             model_save_time = runner.t_env
             save_path = os.path.join(
-                args.local_results_path, "models", args.unique_token, str(runner.t_env)
+                args.results_path, "models", str(runner.t_env)
             )
             os.makedirs(save_path, exist_ok=True)
             logger.console_logger.info("Saving models to {}".format(save_path))
 
-            # learner should handle saving/loading -- delegate actor save/load to mac,
-            # use appropriate filenames to do critics, optimizer states
+            # learner should handle saving/loading of all the models
             learner.save_models(save_path)
+            if has_explorer is True:  # In this case, the explorer should be saved separately
+                explorer.save_models(save_path)
 
         episode += args.batch_size_run
 

@@ -23,11 +23,13 @@ class ParallelRunner:
         self.preprocess = None
         self.groups = None
         self.scheme = None
-        self.mac = None
-        self.explorer = None
         self.new_batch = None
         self.batch = None
         self.env_steps_this_run = None
+        self.mac = None
+        self.explorer = None
+        if args.explorer == 'maven':  # MAVEN uses a noise vector which augments the observation
+            self.noise = None
 
         self.args = args
         self.logger = logger
@@ -87,14 +89,11 @@ class ParallelRunner:
         self.episode_limit = self.env_info["episode_limit"]
 
         self.t = 0
-
         self.t_env = 0
-
         self.train_returns = []
         self.test_returns = []
         self.train_stats = {}
         self.test_stats = {}
-
         self.log_train_stats_t = -100000
 
     def setup(self, scheme, groups, preprocess, mac, explorer):
@@ -155,6 +154,11 @@ class ParallelRunner:
 
         self.batch.update(pre_transition_data, ts=0)
 
+        # In the case of MAVEN, at the beginning of each episode, sample the noise vector and add it to the batch.
+        if self.args.explorer == 'maven':
+            self.noise = self.explorer.sample(self.batch['state'][:, 0])
+            self.batch.update({"noise": self.noise}, ts=0)
+        
         self.t = 0
         self.env_steps_this_run = 0
 
@@ -181,8 +185,8 @@ class ParallelRunner:
                 test_mode=test_mode
             )
 
-            # Choose actions based on explorer, if applicable. This is for EOI.
-            if self.explorer is not None:
+            # In the case of EOI, choose actions based on the explorer.
+            if self.args.explorer == 'eoi':
                 actions = self.explorer.select_actions(
                     actions,
                     self.t,
@@ -307,20 +311,20 @@ class ParallelRunner:
         cur_stats.update({k: sum(d.get(k, 0) for d in infos) for k in set.union(*[set(d) for d in infos])})
         cur_stats["n_episodes"] = self.batch_size + cur_stats.get("n_episodes", 0)
         cur_stats["ep_length"] = sum(episode_lengths) + cur_stats.get("ep_length", 0)
-
+        
         cur_returns.extend(episode_returns)
 
         n_test_runs = max(1, self.args.test_nepisode // self.batch_size) * self.batch_size
-        if test_mode and (len(self.test_returns) == n_test_runs):
+        if test_mode and (len(self.test_returns) >= n_test_runs):
             self._log(cur_returns, cur_stats, log_prefix)
         elif self.t_env - self.log_train_stats_t >= self.args.runner_log_interval:
             self._log(cur_returns, cur_stats, log_prefix)
             if hasattr(self.mac.action_selector, "epsilon"):
                 self.logger.log_stat("epsilon", self.mac.action_selector.epsilon, self.t_env)
             self.log_train_stats_t = self.t_env
-
-        return self.batch
-
+ 
+        return self.batch, episode_returns
+    
     def _log(self, returns, stats, prefix):
         self.logger.log_stat(prefix + "return_mean", np.mean(returns), self.t_env)
         self.logger.log_stat(prefix + "return_std", np.std(returns), self.t_env)

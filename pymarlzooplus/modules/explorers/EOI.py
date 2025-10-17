@@ -166,7 +166,7 @@ class EOIBatchTrainer(object):
 
 class Explorer(object):
 
-    def __init__(self, scheme, groups, args, episode_limit):
+    def __init__(self, scheme, groups, args, episode_limit, logger):
 
         self.episode_ratio = args.episode_ratio
         self.explore_ratio = args.explore_ratio
@@ -272,4 +272,28 @@ class Explorer(object):
                     )
 
         return actions
+
+    def save_models(self, path):
+        torch.save(self.eoi_net.state_dict(), f"{path}/eoi_net.th")
+        torch.save(self.ivf.state_dict(), f"{path}/ivf.th")
+        torch.save(self.ivf_tar.state_dict(), f"{path}/ivf_tar.th")
+        torch.save(self.trainer.eoi_trainer.optimizer_eoi.state_dict(), f"{path}/eoi_optimizer.th")
+        torch.save(self.trainer.eoi_trainer.optimizer_ivf.state_dict(), f"{path}/ivf_optimizer.th")
+
+    def load_models(self, path):
+        self.eoi_net.load_state_dict(
+            torch.load(f"{path}/eoi_net.th", map_location=lambda storage, loc: storage)
+        )
+        self.ivf.load_state_dict(
+            torch.load(f"{path}/ivf.th", map_location=lambda storage, loc: storage)
+        )
+        self.ivf_tar.load_state_dict(
+            torch.load(f"{path}/ivf_tar.th", map_location=lambda storage, loc: storage)
+        )
+        self.trainer.eoi_trainer.optimizer_eoi.load_state_dict(
+            torch.load(f"{path}/eoi_optimizer.th", map_location=lambda storage, loc: storage)
+        )
+        self.trainer.eoi_trainer.optimizer_ivf.load_state_dict(
+            torch.load(f"{path}/ivf_optimizer.th", map_location=lambda storage, loc: storage)
+        )
 

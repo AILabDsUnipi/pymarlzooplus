@@ -1,7 +1,6 @@
 import torch as th
 from torch.distributions import Categorical
 from .epsilon_schedules import DecayThenFlatSchedule
-REGISTRY = {}
 
 
 class MultinomialActionSelector:
@@ -9,10 +8,12 @@ class MultinomialActionSelector:
     def __init__(self, args):
         self.args = args
 
-        self.schedule = DecayThenFlatSchedule(args.epsilon_start,
-                                              args.epsilon_finish,
-                                              args.epsilon_anneal_time,
-                                              decay="linear")
+        self.schedule = DecayThenFlatSchedule(
+            args.epsilon_start,
+            args.epsilon_finish,
+            args.epsilon_anneal_time,
+            decay="linear"
+        )
         self.epsilon = self.schedule.eval(0)
         self.test_greedy = getattr(args, "test_greedy", True)
         self.action_selector_strategy = args.action_selector_strategy
@@ -30,13 +31,9 @@ class MultinomialActionSelector:
 
         if self.action_selector_strategy == "maser_selector_strategy":
             if not (th.gather(avail_actions, dim=2, index=picked_actions.unsqueeze(2)) > 0.99).all():
-                print('Choosing new action ...')
                 return self.select_action(agent_inputs, avail_actions, t_env, test_mode)
 
         return picked_actions
-
-
-REGISTRY["multinomial"] = MultinomialActionSelector
 
 
 class EpsilonGreedyActionSelector:
@@ -44,10 +41,12 @@ class EpsilonGreedyActionSelector:
     def __init__(self, args):
         self.args = args
 
-        self.schedule = DecayThenFlatSchedule(args.epsilon_start,
-                                              args.epsilon_finish,
-                                              args.epsilon_anneal_time,
-                                              decay="linear")
+        self.schedule = DecayThenFlatSchedule(
+            args.epsilon_start,
+            args.epsilon_finish,
+            args.epsilon_anneal_time,
+            decay="linear"
+        )
         self.epsilon = self.schedule.eval(0)
         self.action_selector_strategy = args.action_selector_strategy
 
@@ -72,13 +71,9 @@ class EpsilonGreedyActionSelector:
 
         if self.action_selector_strategy == "maser_selector_strategy":
             if not (th.gather(avail_actions, dim=2, index=picked_actions.unsqueeze(2)) > 0.99).all():
-                print('Choosing new action ...')
                 return self.select_action(agent_inputs, avail_actions, t_env, test_mode)
 
         return picked_actions
-
-
-REGISTRY["epsilon_greedy"] = EpsilonGreedyActionSelector
 
 
 class SoftPoliciesSelector:
@@ -98,5 +93,8 @@ class SoftPoliciesSelector:
         return picked_actions
 
 
-REGISTRY["soft_policies"] = SoftPoliciesSelector
-
+REGISTRY = {
+    "epsilon_greedy": EpsilonGreedyActionSelector,
+    "multinomial": MultinomialActionSelector,
+    "soft_policies": SoftPoliciesSelector,
+}

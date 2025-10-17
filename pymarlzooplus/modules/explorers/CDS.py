@@ -51,13 +51,17 @@ class CDSExplorer:
 
     def load_models(self, path):
         self.eval_predict_with_id.load_state_dict(
-            th.load("{}/pid.th".format(path), map_location=lambda storage, loc: storage))
+            th.load("{}/pid.th".format(path), map_location=lambda storage, loc: storage)
+        )
         self.target_predict_with_id.load_state_dict(
-            th.load("{}/pid.th".format(path), map_location=lambda storage, loc: storage))
+            th.load("{}/pid.th".format(path), map_location=lambda storage, loc: storage)
+        )
         self.eval_predict_without_id.load_state_dict(
-            th.load("{}/poid.th".format(path), map_location=lambda storage, loc: storage))
+            th.load("{}/poid.th".format(path), map_location=lambda storage, loc: storage)
+        )
         self.target_predict_without_id.load_state_dict(
-            th.load("{}/poid.th".format(path), map_location=lambda storage, loc: storage))
+            th.load("{}/poid.th".format(path), map_location=lambda storage, loc: storage)
+        )
 
     def update_targets(self):
         self.target_predict_with_id.load_state_dict(

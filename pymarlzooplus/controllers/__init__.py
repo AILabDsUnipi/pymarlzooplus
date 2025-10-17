@@ -5,6 +5,7 @@ from .mat_controller import MATMAC
 from .happo_controller import happoMAC
 from .emc_controller import emcMAC
 from .cds_controller import cdsMAC
+from .maven_controller import Maven
 from .commformer_controller import CommFormerMAC
 
 REGISTRY = {"basic_mac": BasicMAC,
@@ -14,6 +15,7 @@ REGISTRY = {"basic_mac": BasicMAC,
             "happo_mac": happoMAC,
             "emc_mac": emcMAC,
             "cds_mac": cdsMAC,
+            "maven_mac": Maven
             "commformer_mac": CommFormerMAC
             }
 

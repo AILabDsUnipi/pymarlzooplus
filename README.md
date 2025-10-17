@@ -12,7 +12,7 @@
 
 
 PyMARLzoo+ is an extension of [EPyMARL](https://github.com/uoe-agents/epymarl), and includes
-- Additional (8) algorithms: 
+- Additional (9) algorithms: 
   - HAPPO, 
   - MAT-DEC, 
   - QPLEX, 
@@ -20,6 +20,7 @@ PyMARLzoo+ is an extension of [EPyMARL](https://github.com/uoe-agents/epymarl), 
   - EMC, 
   - MASER, 
   - CDS
+  - MAVEN (integrated by [Apostolos Varelas](https://github.com/ApostolosVarelas) and [Vaios Konstantopoulos](https://github.com/Vaioskn), reporting results [here](https://drive.google.com/file/d/1n1mXdtQxJ7VWb7tbfCtlGSTJb8MfQ1M-/view?usp=sharing))
   - CommFormer (integrated by [NickCheliotis](https://github.com/NickCheliotis) and [petrostriantafyllos](https://github.com/petrostriantafyllos), reporting results [here](https://drive.google.com/file/d/1E5UnJcbLyw8Fw8EIgHTmsPEsZ2hhiBxe/view?usp=sharing)) 
 - Support for [PettingZoo](https://github.com/Farama-Foundation/PettingZoo) environments
 - Support for [Overcooked](https://github.com/HumanCompatibleAI/overcooked_ai) environments.
@@ -167,6 +168,7 @@ In the following instructions, ```<algo>``` (or ```"algo"```) can be replaced wi
 - "emc" 
 - "maser" 
 - "cds"
+- "maven"
 - "commformer"
 
 You can specify the algorithm arguments:
@@ -741,6 +743,7 @@ Thank you for contributing to the project and helping us improve!
   - MAT_DEC
   - HAPPO
   - QPLEX
+  - MAVEN
   - CommFormer
 - [ ] Docstrings for all code
 - [ ] Make the code to be more abstract and modular

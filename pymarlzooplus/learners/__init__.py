@@ -9,6 +9,7 @@ from .happo_learner import HAPPOLearner
 from .dmaq_qatten_learner import DMAQ_qattenLearner
 from .mat_learner import MATLearner
 from .maser_q_learner import  MASERQLearner
+from .maven_learner import MavenLearner
 from .commformer_learner import CommFormerLearner
 
 REGISTRY = {"q_learner": QLearner,
@@ -22,5 +23,6 @@ REGISTRY = {"q_learner": QLearner,
             "mat_learner": MATLearner,
             "emc_qplex_curiosity_vdn_learner": EMC_qplex_curiosity_vdn_Learner,
             "maser_q_learner": MASERQLearner,
+            "maven_learner": MavenLearner
             "commformer_learner": CommFormerLearner,
             }
