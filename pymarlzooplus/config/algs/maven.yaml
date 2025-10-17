@@ -39,7 +39,7 @@ mi_loss: 0.001
 has_explorer: True
 explorer: "maven"
 entropy_scaling: 0.001
-bandit_buffer: 5  # 512
+bandit_buffer: 512
 bandit_iters: 8
 bandit_batch: 64
 noise_dim: 16

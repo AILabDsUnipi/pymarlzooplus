@@ -14,7 +14,7 @@ args, remaining = parser.parse_known_args()
 sys.argv = [sys.argv[0]] + remaining
 FILTER_ALGOS = [a.strip().upper() for a in args.algo.split(',')] if args.algo else None
 FILTER_ENVS = [e.strip().lower() for e in args.env.split(',')] if args.env else None
-ALGO_RAW_IMGS_NOT_SUPPORTED = ["CDS", "MASER", "EMC", "EOI", "MAT-DEC", "HAPPO", "QPLEX"]
+ALGO_RAW_IMGS_NOT_SUPPORTED = ["CDS", "MASER", "EMC", "EOI", "MAT-DEC", "HAPPO", "QPLEX", "MAVEN"]
 
 
 def generate_training_configs(env_type, keys, common_args, algo_names, variants=None):
