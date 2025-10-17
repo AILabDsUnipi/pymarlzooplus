@@ -12,17 +12,18 @@ from .maser_q_learner import  MASERQLearner
 from .maven_learner import MavenLearner
 from .commformer_learner import CommFormerLearner
 
-REGISTRY = {"q_learner": QLearner,
-            "coma_learner": COMALearner,
-            "qtran_learner": QTranLearner,
-            "actor_critic_learner": ActorCriticLearner,
-            "maddpg_learner": MADDPGLearner,
-            "ppo_learner": PPOLearner,
-            "happo_learner": HAPPOLearner,
-            "dmaq_qatten_learner": DMAQ_qattenLearner,
-            "mat_learner": MATLearner,
-            "emc_qplex_curiosity_vdn_learner": EMC_qplex_curiosity_vdn_Learner,
-            "maser_q_learner": MASERQLearner,
-            "maven_learner": MavenLearner
-            "commformer_learner": CommFormerLearner,
-            }
+REGISTRY = {
+    "q_learner": QLearner,
+    "coma_learner": COMALearner,
+    "qtran_learner": QTranLearner,
+    "actor_critic_learner": ActorCriticLearner,
+    "maddpg_learner": MADDPGLearner,
+    "ppo_learner": PPOLearner,
+    "happo_learner": HAPPOLearner,
+    "dmaq_qatten_learner": DMAQ_qattenLearner,
+    "mat_learner": MATLearner,
+    "emc_qplex_curiosity_vdn_learner": EMC_qplex_curiosity_vdn_Learner,
+    "maser_q_learner": MASERQLearner,
+    "maven_learner": MavenLearner,
+    "commformer_learner": CommFormerLearner,
+}

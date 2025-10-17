@@ -8,14 +8,15 @@ from .cds_controller import cdsMAC
 from .maven_controller import Maven
 from .commformer_controller import CommFormerMAC
 
-REGISTRY = {"basic_mac": BasicMAC,
-            "non_shared_mac": NonSharedMAC,
-            "maddpg_mac": MADDPGMAC,
-            "mat_mac": MATMAC,
-            "happo_mac": happoMAC,
-            "emc_mac": emcMAC,
-            "cds_mac": cdsMAC,
-            "maven_mac": Maven
-            "commformer_mac": CommFormerMAC
-            }
+REGISTRY = {
+        "basic_mac": BasicMAC,
+        "non_shared_mac": NonSharedMAC,
+        "maddpg_mac": MADDPGMAC,
+        "mat_mac": MATMAC,
+        "happo_mac": happoMAC,
+        "emc_mac": emcMAC,
+        "cds_mac": cdsMAC,
+        "maven_mac": Maven,
+        "commformer_mac": CommFormerMAC
+}
 
