@@ -18,6 +18,8 @@ class EpisodeRunner:
         self.new_batch = None
         self.mac = None
         self.explorer = None
+        if args.explorer == 'maven':  # MAVEN uses a noise vector which augments the observation
+            self.noise = None
 
         self.args = args
         self.logger = logger
@@ -95,6 +97,11 @@ class EpisodeRunner:
 
             self.batch.update(pre_transition_data, ts=self.t)
 
+            # In the case of MAVEN, at the beginning of each episode, sample the noise vector and add it to the batch.
+            if self.args.explorer == 'maven' and self.t == 0:
+                self.noise = self.explorer.sample(self.batch['state'][:, 0])
+                self.batch.update({"noise": self.noise}, ts=0)
+
             # Pass the entire batch of experiences up till now to the agents
             # Receive the actions for each agent at this timestep in a batch of size 1
             actions, extra_returns = self.mac.select_actions(
@@ -104,8 +111,8 @@ class EpisodeRunner:
                 test_mode=test_mode
             )
 
-            # Choose actions based on explorer, if applicable. This is for EOI.
-            if self.explorer is not None:
+            ## In the case of EOI, choose actions based on the explorer.
+            if self.args.explorer == 'eoi':
                 actions = self.explorer.select_actions(
                     actions,
                     self.t,
@@ -174,7 +181,7 @@ class EpisodeRunner:
                 self.logger.log_stat("epsilon", self.mac.action_selector.epsilon, self.t_env)
             self.log_train_stats_t = self.t_env
 
-        return self.batch
+        return self.batch, [episode_return]
 
     def _log(self, returns, stats, prefix):
         self.logger.log_stat(prefix + "return_mean", np.mean(returns), self.t_env)

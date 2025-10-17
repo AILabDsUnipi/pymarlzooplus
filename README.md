@@ -12,7 +12,7 @@
 
 
 PyMARLzoo+ is an extension of [EPyMARL](https://github.com/uoe-agents/epymarl), and includes
-- Additional (7) algorithms: 
+- Additional (9) algorithms: 
   - HAPPO, 
   - MAT-DEC, 
   - QPLEX, 
@@ -20,6 +20,7 @@ PyMARLzoo+ is an extension of [EPyMARL](https://github.com/uoe-agents/epymarl), 
   - EMC, 
   - MASER, 
   - CDS
+  - MAVEN (integrated by [Apostolos Varelas](https://github.com/ApostolosVarelas) and [Vaios Konstantopoulos](https://github.com/Vaioskn), reporting results [here](https://drive.google.com/file/d/1n1mXdtQxJ7VWb7tbfCtlGSTJb8MfQ1M-/view?usp=sharing))
 - Support for [PettingZoo](https://github.com/Farama-Foundation/PettingZoo) environments
 - Support for [Overcooked](https://github.com/HumanCompatibleAI/overcooked_ai) environments.
 - Support for [Pressure plate](https://github.com/uoe-agents/pressureplate) environments.
@@ -157,6 +158,7 @@ In the following instructions, ```<algo>``` (or ```"algo"```) can be replaced wi
 - "emc" 
 - "maser" 
 - "cds"
+- "maven"
 
 You can specify the algorithm arguments:
 - In case of running experiment **from source**, you can edit the corresponding configuration file in [pymarlzooplus/config/algs/](pymarlzooplus/config/algs) and the [pymarlzooplus/config/default.yaml](pymarlzooplus/config/default.yaml).
@@ -730,6 +732,7 @@ Thank you for contributing to the project and helping us improve!
   - MAT_DEC
   - HAPPO
   - QPLEX
+  - MAVEN
 - [ ] Docstrings for all code
 - [ ] Make the code to be more abstract and modular 
 - [x] Publish Docker Image

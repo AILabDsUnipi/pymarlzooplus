@@ -1,25 +1,32 @@
+# Code based on: https://github.com/AnujMahajanOxf/MAVEN/blob/master/maven_code/src/modules/agents/noise_rnn_agent.py
+
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
+
+from pymarlzooplus.utils.trainable_image_encoder import TrainableImageEncoder
+
 
 class RNNAgentMaven(nn.Module):
     def __init__(self, input_shape, args):
         super(RNNAgentMaven, self).__init__()
         self.args = args
 
+        # Use CNN to encode image observations
+        self.is_image = False
+        if isinstance(input_shape, tuple):  # image input
+            self.cnn = TrainableImageEncoder(input_shape, args)
+            input_shape = self.cnn.features_dim + input_shape[1]
+            self.is_image = True
+
+        assert self.is_image is False, "HAPPO does not support image obs for the time being!"
+
         self.fc1 = nn.Linear(input_shape, args.hidden_dim)
         self.rnn = nn.GRUCell(args.hidden_dim, args.hidden_dim)
-        self.fc2 = nn.Linear(args.hidden_dim, args.n_actions)
-
-        self.noise_fc1 = nn.Linear(args.noise_dim + args.n_agents, args.noise_embedding_dim)
-        self.noise_fc2 = nn.Linear(args.noise_embedding_dim, args.noise_embedding_dim)
-        self.noise_fc3 = nn.Linear(args.noise_embedding_dim, args.n_actions)
-
-        self.hyper = True
         self.hyper_noise_fc1 = nn.Linear(args.noise_dim + args.n_agents, args.hidden_dim * args.n_actions)
 
     def init_hidden(self):
-        # make hidden states on same device as model
+        # make hidden states on the same device as the model
         return self.fc1.weight.new(1, self.args.hidden_dim).zero_()
 
     def forward(self, inputs, hidden_state, noise):
@@ -29,18 +36,10 @@ class RNNAgentMaven(nn.Module):
         x = F.relu(self.fc1(inputs))
         h_in = hidden_state.reshape(-1, self.args.hidden_dim)
         h = self.rnn(x, h_in)
-        q = self.fc2(h)
 
         noise_input = th.cat([noise_repeated, agent_ids], dim=-1)
 
-        if self.hyper:
-            W = self.hyper_noise_fc1(noise_input).reshape(-1, self.args.n_actions, self.args.hidden_dim)
-            wq = th.bmm(W, h.unsqueeze(2))
-        else:
-            z = F.tanh(self.noise_fc1(noise_input))
-            z = F.tanh(self.noise_fc2(z))
-            wz = self.noise_fc3(z)
-
-            wq = q * wz
+        W = self.hyper_noise_fc1(noise_input).reshape(-1, self.args.n_actions, self.args.hidden_dim)
+        wq = th.bmm(W, h.unsqueeze(2))
 
         return wq, h
