@@ -1,4 +1,4 @@
-name: Tests for MAA2C, IA2C, QMIX algo
+name: Tests for CommFormer algo
 
 on:
   pull_request:
