@@ -84,16 +84,12 @@ class vdn_Learner:
         else:
             intrinsic_rewards = self.args.curiosity_scale * (prediction_error.mean(dim=-1, keepdim=True).detach())
 
+        # Loss and optimization
         prediction_loss = prediction_error.sum() / prediction_mask.sum()
-
-        ############################
-
         self.predict_optimiser.zero_grad()
         prediction_loss.backward()
         predict_grad_norm = th.nn.utils.clip_grad_norm_(self.predict_params, self.args.grad_norm_clip)
         self.predict_optimiser.step()
-
-        ############################
 
         # Pick the Q-Values for the actions taken by each agent
         chosen_action_qvals = th.gather(mac_out[:, :-1], dim=3, index=actions).squeeze(3)  # Remove the last dim
@@ -167,22 +163,25 @@ class vdn_Learner:
             self.logger.log_stat("curiosity_scale", self.args.curiosity_scale, t_env)
             self.logger.log_stat("curiosity_decay_rate", self.args.curiosity_decay_rate, t_env)
             self.logger.log_stat("curiosity_decay_cycle", self.args.curiosity_decay_cycle, t_env)
-
             self.logger.log_stat("curiosity_decay_stop", self.args.curiosity_decay_stop, t_env)
             self.logger.log_stat("vdn hit_prob", hit_prob.item(), t_env)
-            self.logger.log_stat("vdn grad_norm", grad_norm, t_env)
+            self.logger.log_stat("vdn grad_norm", grad_norm.item(), t_env)
             mask_elems = mask.sum().item()
             self.logger.log_stat("vdn prediction loss", prediction_loss.item(), t_env)
-
+            self.logger.log_stat("vdn predict grad_norm", predict_grad_norm.item(), t_env)
             self.logger.log_stat("vdn intrinsic rewards", intrinsic_rewards.sum().item() / mask_elems, t_env)
             self.logger.log_stat("vdn extrinsic rewards", rewards.sum().item() / mask_elems, t_env)
             self.logger.log_stat("vdn td_error_abs", (masked_td_error.abs().sum().item() / mask_elems), t_env)
-            self.logger.log_stat("vdn q_taken_mean",
-                                 (chosen_action_qvals * mask).sum().item() / (mask_elems * self.args.n_agents),
-                                 t_env)
-            self.logger.log_stat("vdn target_mean",
-                                 (targets * mask).sum().item() / (mask_elems * self.args.n_agents),
-                                 t_env)
+            self.logger.log_stat(
+                "vdn q_taken_mean",
+                (chosen_action_qvals * mask).sum().item() / (mask_elems * self.args.n_agents),
+                t_env
+            )
+            self.logger.log_stat(
+                "vdn target_mean",
+                (targets * mask).sum().item() / (mask_elems * self.args.n_agents),
+                t_env
+            )
 
             self.log_stats_t = t_env
 
@@ -190,8 +189,7 @@ class vdn_Learner:
 
     def train(self, batch: EpisodeBatch, t_env: int, episode_num: int, imac=None, timac=None):
 
-        intrinsic_rewards = \
-            self.subtrain(batch, t_env, episode_num, self.mac, imac=imac, timac=timac)
+        intrinsic_rewards = self.subtrain(batch, t_env, episode_num, self.mac, imac=imac, timac=timac)
 
         self._smooth_update_predict_targets()
         if (episode_num - self.last_target_update_episode) / self.args.target_update_interval >= 1.0:
@@ -209,7 +207,8 @@ class vdn_Learner:
     def _smooth_update_predict_targets(self):
         self.soft_update(self.soft_target_mac, self.mac, self.args.soft_update_tau)
 
-    def soft_update(self, target, source, tau):
+    @staticmethod
+    def soft_update(target, source, tau):
         for target_param, param in zip(target.parameters(), source.parameters()):
             target_param.data.copy_(target_param.data * (1.0 - tau) + param.data * tau)
 

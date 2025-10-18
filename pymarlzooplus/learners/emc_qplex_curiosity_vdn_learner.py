@@ -218,7 +218,7 @@ class EMC_qplex_curiosity_vdn_Learner:
         if t_env - self.log_stats_t >= self.args.learner_log_interval:
             self.logger.log_stat("loss", loss.item(), t_env)
             self.logger.log_stat("hit_prob", hit_prob.item(), t_env)
-            self.logger.log_stat("grad_norm", grad_norm, t_env)
+            self.logger.log_stat("grad_norm", grad_norm.item(), t_env)
             mask_elems = mask.sum().item()
             if self.args.use_emdqn:
                 self.logger.log_stat(
