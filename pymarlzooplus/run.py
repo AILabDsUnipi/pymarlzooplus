@@ -68,6 +68,68 @@ def run(_run, _config, _log):
         logger.setup_tb(tb_exp_direc)
 
     # sacred is on by default
+    # Initialize wandb if requested in config
+    try:
+        wandb_cfg = getattr(args, "wandb", None)
+    except Exception:
+        wandb_cfg = None
+
+    if wandb_cfg and isinstance(wandb_cfg, dict) and wandb_cfg.get("enable", False):
+        # Prepare wandb kwargs
+        wandb_kwargs = {}
+        # name: if user supplied a run_name use it, otherwise build a descriptive name
+        if wandb_cfg.get("run_name"):
+            wandb_name = wandb_cfg.get("run_name")
+        else:
+            # Prefer args.learner (algorithm) when available, fall back to config
+            try:
+                alg_name = args.learner
+            except Exception:
+                alg_name = _config.get("learner", "")
+
+            # Use _config['name'] (experiment name) if it exists
+            exp_name = _config.get("name", "exp") if isinstance(_config, dict) else getattr(args, "name", "exp")
+
+            # Build a readable run name: <exp>_<env>_<algo>_seed<seed>
+            seed_str = f"_seed{_config.get('seed')}" if isinstance(_config, dict) and _config.get('seed') is not None else ""
+            wandb_name = f"{exp_name}_{map_name}_{alg_name}{seed_str}"
+
+        wandb_kwargs["name"] = wandb_name
+        if wandb_cfg.get("project"):
+            wandb_kwargs["project"] = wandb_cfg.get("project")
+        if wandb_cfg.get("entity"):
+            wandb_kwargs["entity"] = wandb_cfg.get("entity")
+        # dir -> store within the sacred results dir by default
+        try:
+            wb_base = wandb_cfg.get("save_dir", "results/wandb")
+            # If save_dir is absolute use it, else join with results_dir
+            if os.path.isabs(wb_base):
+                wandb_dir = wb_base
+            else:
+                wandb_dir = os.path.join(results_dir, wb_base)
+            os.makedirs(wandb_dir, exist_ok=True)
+            wandb_kwargs["dir"] = wandb_dir
+        except Exception:
+            pass
+        # optional args
+        if "sync_tensorboard" in wandb_cfg:
+            wandb_kwargs["sync_tensorboard"] = wandb_cfg.get("sync_tensorboard")
+        if "resume" in wandb_cfg:
+            wandb_kwargs["resume"] = wandb_cfg.get("resume")
+        if wandb_cfg.get("id"):
+            wandb_kwargs["id"] = wandb_cfg.get("id")
+        if wandb_cfg.get("notes"):
+            wandb_kwargs["notes"] = wandb_cfg.get("notes")
+        if wandb_cfg.get("tags"):
+            wandb_kwargs["tags"] = wandb_cfg.get("tags")
+
+        # Initialize via the Logger helper (which handles optional import)
+        try:
+            logger.setup_wandb(wandb_kwargs, config=_config)
+            _log.info("wandb initialized")
+        except Exception:
+            _log.warning("Failed to initialize wandb. Continuing without wandb.")
+
     logger.setup_sacred(_run)
 
     # Run and train

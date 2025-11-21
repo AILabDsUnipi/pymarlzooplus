@@ -15,11 +15,13 @@ class Logger:
 
         self.use_tb = False
         self.use_sacred = False
+        self.use_wandb = False
         self.use_hdf = False
 
         self.tb_logger = None
         self._run_obj = None
         self.sacred_info = None
+        self.wandb = None
 
         self.stats = defaultdict(lambda: [])
 
@@ -34,6 +36,42 @@ class Logger:
         self._run_obj = sacred_run_dict
         self.sacred_info = sacred_run_dict.info
         self.use_sacred = True
+
+    def setup_wandb(self, wandb_kwargs: dict = None, config: dict = None):
+        """
+        Initialize a wandb run. This method imports wandb lazily so wandb is optional.
+
+        wandb_kwargs: dict of arguments forwarded to wandb.init (project, entity, name, dir, sync_tensorboard, resume, id, notes, tags)
+        config: optional dict with experiment config to be saved to wandb
+        """
+        try:
+            import wandb
+        except Exception as e:  # pragma: no cover - optional dependency
+            # warn and disable wandb usage
+            try:
+                self.console_logger.warning(f"wandb not available ({e}). Continuing without wandb.")
+            except Exception:
+                pass
+            self.use_wandb = False
+            self.wandb = None
+            return
+
+        wandb_kwargs = wandb_kwargs or {}
+        # Call wandb.init
+        try:
+            # Ensure directory exists if provided
+            run = wandb.init(**wandb_kwargs, config=config)
+            self.wandb = wandb
+            self.use_wandb = True
+            # Keep a reference to the run object on the logger for potential teardown
+            self._wandb_run = run
+        except Exception as e:  # pragma: no cover - be robust to wandb errors
+            try:
+                self.console_logger.warning(f"Failed to initialize wandb ({e}). Continuing without wandb.")
+            except Exception:
+                pass
+            self.use_wandb = False
+            self.wandb = None
 
     def log_stat(self, key, value, t, to_sacred=True):
         self.stats[key].append((t, value))
@@ -50,6 +88,15 @@ class Logger:
                 self.sacred_info[key] = [value]
 
             self._run_obj.log_scalar(key, value, t)
+
+        # Log to wandb if configured
+        if getattr(self, "use_wandb", False) and getattr(self, "wandb", None) is not None:
+            try:
+                # wandb.log expects a dict and optionally a step
+                self.wandb.log({key: float(self._to_float(value))}, step=int(t))
+            except Exception:
+                # Don't propagate wandb logging errors
+                pass
 
     @staticmethod
     def _to_float(x):

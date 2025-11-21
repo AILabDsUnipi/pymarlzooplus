@@ -85,6 +85,55 @@ conda create -y -n pymarlzooplus python=3.8.18
 conda activate pymarlzooplus
 ```
 
+## Weights & Biases (optional)
+
+PyMARLzoo+ supports optional integration with Weights & Biases (W&B). To enable logging to W&B:
+
+1. Install wandb in your environment (we already added it to `requirements.txt`):
+
+```sh
+conda run -n pymarlzooplus pip install -U wandb
+```
+
+2. Login to W&B (if you want online sync):
+
+```sh
+conda run -n pymarlzooplus wandb login
+```
+
+Alternatively you can export your API key:
+
+```sh
+export WANDB_API_KEY=<your_api_key>
+```
+
+3. Enable W&B in the config (`pymarlzooplus/config/default.yaml`) by setting:
+
+```yaml
+wandb:
+  enable: True
+  project: "pymarlzooplus"
+  entity: null
+  run_name: null
+  notes: ""
+  tags: []
+  save_dir: "results/wandb"
+  sync_tensorboard: False
+  resume: False
+  id: null
+```
+
+4. If you don't want to sync to the W&B cloud during quick tests, run in offline mode:
+
+```sh
+WANDB_MODE=offline python -m pymarlzooplus.main --config=<algo> --env-config=<env> with env_args.key=<scenario>
+```
+
+Notes:
+- The integration is optional and robust: if `wandb` isn't installed the code will continue without failing.
+- Scalar metrics already logged through the project's `Logger` will also be forwarded to W&B automatically when enabled.
+
+
 - To install and use PyMARLzoo+ as a package, run the following commands:
   ```sh
   pip install pymarlzooplus
