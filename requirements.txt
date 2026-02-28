@@ -13,6 +13,7 @@ pyglet==1.5.27
 tqdm
 pettingzoo[all]==1.24.3
 rich
+wandb
 
 # For MPE
 seaborn

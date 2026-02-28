@@ -57,3 +57,16 @@ action_selector_strategy: "basic_selector_strategy"
 repeat_id: 1
 label: "default_label"
 hypergroup: null
+
+# --- Weights & Biases (wandb) logging ---
+wandb:
+  enable: False # Enable W&B logging
+  project: "" # W&B project name
+  entity: "" # W&B entity/user (optional)
+  run_name: null # If null, a token based on the env and algorithm will be used
+  notes: "" # Optional notes/description for the run
+  tags: [] # Optional list of tags
+  save_dir: "results/wandb" # Directory where W&B will store run files (overrides wandb default dir)
+  sync_tensorboard: False # Whether to enable wandb's tensorboard sync
+  resume: False # Whether to attempt to resume previous run
+  id: null # If provided and resume True, use this run id

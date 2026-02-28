@@ -68,6 +68,9 @@ def run(_run, _config, _log):
         logger.setup_tb(tb_exp_direc)
 
     # sacred is on by default
+    # Initialize wandb if requested in config
+    logger.setup_wandb(args, _config, map_name, results_dir)
+
     logger.setup_sacred(_run)
 
     # Run and train
@@ -81,6 +84,7 @@ def run(_run, _config, _log):
     plot_single_experiment_results(results_dir, algo_name=_config['name'], env_name=map_name)
 
     # Clean up after finishing
+    logger.finish_wandb()
     _log.info("Exiting Main")
 
     _log.info("Stopping all threads")

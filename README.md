@@ -4,6 +4,7 @@
 ![GitHub License](https://img.shields.io/github/license/AILabDsUnipi/pymarlzooplus)
 ![PyPi version](https://img.shields.io/pypi/v/pymarlzooplus)
 ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
+![W&B](https://img.shields.io/badge/Weights_%26_Biases-FFBE00?style=for-the-badge&logo=weightsandbiases&logoColor=black)
 
 <img src="https://raw.githubusercontent.com/AILabDsUnipi/pymarlzooplus/main/images/logo.jpg" alt="logo" width=600/>
 
@@ -68,6 +69,7 @@ series = {AAMAS '25}
 - [Environment API](#environment-api)
 - [Run a hyperparameter search](#run-a-hyperparameter-search)
 - [Saving and loading learnt models](#saving-and-loading-learnt-models)
+- [Weights and biases](#weights-and-biases)
 - [Known issues](#known-issues)
 - [Issues](#issues)
 - [Future work](#future-work)
@@ -705,6 +707,70 @@ You can save the learnt models to disk by setting `save_model = True`, which is 
 ## Loading models
 
 Learnt models can be loaded using the `checkpoint_path` parameter, after which the learning will proceed from the corresponding timestep. 
+
+
+## Weights and Biases 
+
+PyMARLzoo+ supports optional integration with Weights & Biases (W&B). To enable logging to W&B:
+
+1. Install wandb in your environment (we already added it to `requirements.txt`):
+
+```sh
+conda run -n pymarlzooplus pip install -U wandb
+```
+
+or check if wandb is already installed:
+
+```sh
+conda run -n pymarlzooplus pip show wandb
+```
+
+2. Login to W&B (if you want online sync):
+
+```sh
+conda run -n pymarlzooplus wandb login
+```
+
+Alternatively you can export your API key:
+
+```sh
+export WANDB_API_KEY=<your_api_key>
+```
+
+3. Enable W&B in the config (`pymarlzooplus/config/default.yaml`) by setting `enable: True` inside the `wandb` section:
+
+```yaml
+wandb:
+  enable: True               # set to True to activate W&B logging
+  project: "your-project-name"                # W&B project name (e.g. "pymarlzooplus")
+  entity: ""                 # W&B entity/user (optional, leave empty for default)
+  run_name: null             # if null, an automatic name is built from the env, algorithm and seed
+  notes: ""                  # optional notes/description for the run
+  tags: []                   # optional list of tags
+  save_dir: "results/wandb"  # directory where W&B stores run files
+  sync_tensorboard: False
+  resume: False              # whether to attempt to resume a previous run
+  id: null                   # if provided and resume is True, use this run id
+```
+
+4. If you don't want to sync to the W&B cloud during quick tests, run in offline mode:
+
+```sh
+WANDB_MODE=offline python pymarlzooplus/main.py --config=<algo> --env-config=<env> with env_args.key=<scenario>
+```
+
+or set it in the config:
+
+```yaml
+wandb:
+  enable: False
+  # ...
+```
+
+Notes:
+- The integration is optional and robust: if `wandb` isn't installed the code will continue without failing.
+- All wandb setup logic (config parsing, run-name generation, `wandb.init`) lives in `Logger.setup_wandb()` (`pymarlzooplus/utils/logging_setup.py`).
+- Scalar metrics already logged through the project's `Logger` are automatically forwarded to W&B when enabled.
 
 
 
