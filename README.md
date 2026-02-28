@@ -709,9 +709,9 @@ You can save the learnt models to disk by setting `save_model = True`, which is 
 Learnt models can be loaded using the `checkpoint_path` parameter, after which the learning will proceed from the corresponding timestep. 
 
 
-## Weights and Biases 
+# Weights and Biases 
 
-PyMARLzoo+ supports optional integration with Weights & Biases (W&B). To enable logging to W&B:
+PyMARLzoo+ supports integration with Weights & Biases (W&B). We thank [Aditya Parameshwaran](https://github.com/aparame) for this contribution. To enable logging to W&B:
 
 1. Install wandb in your environment (we already added it to `requirements.txt`):
 
@@ -731,7 +731,7 @@ conda run -n pymarlzooplus pip show wandb
 conda run -n pymarlzooplus wandb login
 ```
 
-Alternatively you can export your API key:
+Alternatively, you can export your API key:
 
 ```sh
 export WANDB_API_KEY=<your_api_key>
@@ -768,7 +768,7 @@ wandb:
 ```
 
 Notes:
-- The integration is optional and robust: if `wandb` isn't installed the code will continue without failing.
+- The integration is optional and robust: if `wandb` isn't installed, the code will continue without failing.
 - All wandb setup logic (config parsing, run-name generation, `wandb.init`) lives in `Logger.setup_wandb()` (`pymarlzooplus/utils/logging_setup.py`).
 - Scalar metrics already logged through the project's `Logger` are automatically forwarded to W&B when enabled.
 

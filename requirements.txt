@@ -1,7 +1,7 @@
 # General requirements
 gymnasium
 matplotlib
-numpy
+numpy<2.0.0
 PyYAML
 sacred
 six
