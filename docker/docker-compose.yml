@@ -3,6 +3,6 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-    image: ailabdsunipi/pymarlzooplus:latest
+    image: ailabdsunipi/pymarlzooplus:v1.1.0
     network_mode: host
     command: tail -f /dev/null
