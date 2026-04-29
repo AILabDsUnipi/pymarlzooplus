@@ -841,7 +841,7 @@ Thank you for contributing to the project and helping us improve!
 If you use PyMARLzoo+ in your research, please cite the [An Extended Benchmarking of Multi-Agent Reinforcement Learning Algorithms in Complex Fully Cooperative Tasks
 ]([https://arxiv.org/abs/2006.07869](https://www.arxiv.org/pdf/2502.04773)).
 
-*George Papadopoulos, Andreas Kontogiannis, Foteini Papadopoulou, Chaido Poulianou, Ioannis Koumentis, George Vouros. An Extended Benchmarking of Multi-Agent Reinforcement Learning Algorithms in Complex Fully Cooperative Tasks, AAMAS 2025.*
+*Papadopoulos, G., Kontogiannis, A., Papadopoulou, F., Poulianou, C., Koumentis, I. and Vouros, G., 2025, May. An Extended Benchmarking of Multi-Agent Reinforcement Learning Algorithms in Complex Fully Cooperative Tasks. In Proceedings of the 24th International Conference on Autonomous Agents and Multiagent Systems (pp. 1613-1622).*
 
 ```bibtex
 @inproceedings{papadopoulos2025extended,
