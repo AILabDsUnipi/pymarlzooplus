@@ -836,7 +836,7 @@ Thank you for contributing to the project and helping us improve!
 
 
 
-# Citing PyMARLzoo+, EPyMARL and PyMARL
+# Citing PyMARLzoo+
 
 If you use PyMARLzoo+ in your research, please cite our paper using the following bibtex:
 
