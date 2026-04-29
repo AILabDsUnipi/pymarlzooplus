@@ -844,10 +844,11 @@ If you use PyMARLzoo+ in your research, please cite the [An Extended Benchmarkin
 *George Papadopoulos, Andreas Kontogiannis, Foteini Papadopoulou, Chaido Poulianou, Ioannis Koumentis, George Vouros. An Extended Benchmarking of Multi-Agent Reinforcement Learning Algorithms in Complex Fully Cooperative Tasks, AAMAS 2025.*
 
 ```bibtex
-@article{papadopoulos2025extended,
+@inproceedings{papadopoulos2025extended,
   title={An Extended Benchmarking of Multi-Agent Reinforcement Learning Algorithms in Complex Fully Cooperative Tasks},
   author={Papadopoulos, George and Kontogiannis, Andreas and Papadopoulou, Foteini and Poulianou, Chaido and Koumentis, Ioannis and Vouros, George},
-  journal={arXiv preprint arXiv:2502.04773},
+  booktitle={Proceedings of the 24th International Conference on Autonomous Agents and Multiagent Systems},
+  pages={1613--1622},
   year={2025}
 }
 ```
