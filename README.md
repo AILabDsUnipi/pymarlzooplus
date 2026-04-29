@@ -851,37 +851,7 @@ If you use PyMARLzoo+ in your research, please cite the [An Extended Benchmarkin
   year={2025}
 }
 ```
-If you use EPyMARL in your research, please cite the following:
 
-*Georgios Papoudakis, Filippos Christianos, Lukas Schäfer, & Stefano V. Albrecht. Benchmarking Multi-Agent Deep Reinforcement Learning Algorithms in Cooperative Tasks, Proceedings of the Neural Information Processing Systems Track on Datasets and Benchmarks (NeurIPS), 2021*
-
-```bibtex
-@inproceedings{papoudakis2021benchmarking,
-   title={Benchmarking Multi-Agent Deep Reinforcement Learning Algorithms in Cooperative Tasks},
-   author={Georgios Papoudakis and Filippos Christianos and Lukas Schäfer and Stefano V. Albrecht},
-   booktitle = {Proceedings of the Neural Information Processing Systems Track on Datasets and Benchmarks (NeurIPS)},
-   year={2021},
-   url = {http://arxiv.org/abs/2006.07869},
-   openreview = {https://openreview.net/forum?id=cIrPX-Sn5n},
-   code = {https://github.com/uoe-agents/epymarl},
-}
-```
-
-If you use the original PyMARL in your research, please cite the [SMAC paper](https://arxiv.org/abs/1902.04043).
-
-*M. Samvelyan, T. Rashid, C. Schroeder de Witt, G. Farquhar, N. Nardelli, T.G.J. Rudner, C.-M. Hung, P.H.S. Torr, J. Foerster, S. Whiteson. The StarCraft Multi-Agent Challenge, CoRR abs/1902.04043, 2019.*
-
-In BibTeX format:
-
-```bibtex
-@article{samvelyan19smac,
-  title = {{The} {StarCraft} {Multi}-{Agent} {Challenge}},
-  author = {Mikayel Samvelyan and Tabish Rashid and Christian Schroeder de Witt and Gregory Farquhar and Nantas Nardelli and Tim G. J. Rudner and Chia-Man Hung and Philiph H. S. Torr and Jakob Foerster and Shimon Whiteson},
-  journal = {CoRR},
-  volume = {abs/1902.04043},
-  year = {2019},
-}
-```
 
 
 
