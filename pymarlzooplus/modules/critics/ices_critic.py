@@ -3,7 +3,7 @@ import torch.nn.functional as F
 import torch as th
 import numpy as np
 import torch.nn.init as init
-from utils.th_utils import orthogonal_init_
+from pymarlzooplus.utils.torch_utils import orthogonal_init_
 from torch.nn import LayerNorm
 
 
