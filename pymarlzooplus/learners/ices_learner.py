@@ -26,7 +26,7 @@ import pyro
 from pyro.infer import SVI, Trace_ELBO
 
 # Modules
-from modules.exp.state_pred_cvae import StatePredBL, StatePredCVAE
+from modules.explorers.state_pred_cvae import StatePredBL, StatePredCVAE
 from modules.agents.ices_n_rnn_agent import ICESCritic
 
 
