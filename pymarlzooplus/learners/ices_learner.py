@@ -8,18 +8,19 @@ from modules.mixers.qatten import QattenMixer
 
 from envs.matrix_game import print_matrix_status
 from utils.rl_utils import build_td_lambda_targets, build_q_lambda_targets
+from utils.torch_utils import get_parameters_num
+from utils.helper_func import KL_div, get_gard_norm
+
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.optim import RMSprop, Adam
 import numpy as np
-from utils.th_utils import get_parameters_num
 import pyro
 from pyro.infer import SVI, Trace_ELBO
 
 from modules.exp.state_pred_cvae import StatePredBL, StatePredCVAE
 from modules.agents.ices_n_rnn_agent import ICESCritic
-from utils.helper_func import KL_div, get_gard_norm
 
 
 class ICESNQLearner:
