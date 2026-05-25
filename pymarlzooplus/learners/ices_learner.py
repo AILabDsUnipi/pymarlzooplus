@@ -4,14 +4,14 @@ import copy
 from pymarlzooplus.components.episode_buffer import EpisodeBatch
 
 # Mixers
-from modules.mixers.vdn import VDNMixer
-from modules.mixers.nmix import Mixer
-from modules.mixers.qatten import QattenMixer
+from pymarlzooplus.modules.mixers.vdn import VDNMixer
+from pymarlzooplus.modules.mixers.nmix import Mixer
+from pymarlzooplus.modules.mixers.qatten import QattenMixer
 
 # Utils
-from utils.rl_utils import build_td_lambda_targets, build_q_lambda_targets
-from utils.torch_utils import get_parameters_num
-from utils.helper_func import KL_div, get_gard_norm
+from pymarlzooplus.utils.rl_utils import build_td_lambda_targets, build_q_lambda_targets
+from pymarlzooplus.utils.torch_utils import get_parameters_num
+from pymarlzooplus.utils.helper_func import KL_div, get_gard_norm
 
 # Torch
 import torch as th
@@ -26,10 +26,10 @@ import pyro
 from pyro.infer import SVI, Trace_ELBO
 
 # Modules
-from modules.explorers.state_pred_cvae import StatePredBL, StatePredCVAE
+from pymarlzooplus.modules.explorers.state_pred_cvae import StatePredBL, StatePredCVAE
 
 # Critics
-from modules.critics.ices_critic import ICESCritic
+from pymarlzooplus.modules.critics.ices_critic import ICESCritic
 
 
 class ICESNQLearner:
