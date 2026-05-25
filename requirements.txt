@@ -39,3 +39,6 @@ scipy
 dill
 ipython
 ipywidgets
+
+# For ICES
+pyro-ppl
