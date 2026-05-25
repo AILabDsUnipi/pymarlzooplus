@@ -2,23 +2,30 @@
 
 import copy
 from pymarlzooplus.components.episode_buffer import EpisodeBatch
+
+# Mixers
 from modules.mixers.vdn import VDNMixer
 from modules.mixers.nmix import Mixer
 from modules.mixers.qatten import QattenMixer
 
-from envs.matrix_game import print_matrix_status
+# Utils
 from utils.rl_utils import build_td_lambda_targets, build_q_lambda_targets
 from utils.torch_utils import get_parameters_num
 from utils.helper_func import KL_div, get_gard_norm
 
+# Torch
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.optim import RMSprop, Adam
+
+# Misc
 import numpy as np
+
 import pyro
 from pyro.infer import SVI, Trace_ELBO
 
+# Modules
 from modules.exp.state_pred_cvae import StatePredBL, StatePredCVAE
 from modules.agents.ices_n_rnn_agent import ICESCritic
 
@@ -541,10 +548,6 @@ class ICESNQLearner:
                 "intrinsic_reward_std", int_rewards.std().item(), t_env
             )
             self.log_stats_t = t_env
-
-            # print estimated matrix
-            if self.args.env == "one_step_matrix_game":
-                print_matrix_status(batch, self.mixer, mac_out)
 
         # return info
         info = {}
