@@ -1,10 +1,11 @@
 # ICES NQ-Learner
 
 import copy
-from components.episode_buffer import EpisodeBatch
-from modules.mixers.nmix import Mixer
+from pymarlzooplus.components.episode_buffer import EpisodeBatch
 from modules.mixers.vdn import VDNMixer
+from modules.mixers.nmix import Mixer
 from modules.mixers.qatten import QattenMixer
+
 from envs.matrix_game import print_matrix_status
 from utils.rl_utils import build_td_lambda_targets, build_q_lambda_targets
 import torch as th
