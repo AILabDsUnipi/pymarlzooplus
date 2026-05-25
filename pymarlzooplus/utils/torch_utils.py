@@ -1,3 +1,6 @@
+from torch import nn
+
+
 def to_cuda(module, device=None):
     """Assume module in cpu"""
     if device is None:
@@ -14,3 +17,8 @@ def init(module, weight_init, bias_init, gain=1):
 
 def get_parameters_num(param_list):
     return str(sum(p.numel() for p in param_list) / 1000) + 'K'
+
+def orthogonal_init_(m, gain=1):
+    if isinstance(m, nn.Linear):
+        init(m, nn.init.orthogonal_,
+                    lambda x: nn.init.constant_(x, 0), gain=gain)
