@@ -1,5 +1,5 @@
-from modules.agents import REGISTRY as agent_REGISTRY
-from components.action_selectors import REGISTRY as action_REGISTRY
+from pymarlzooplus.modules.agents import REGISTRY as agent_REGISTRY
+from pymarlzooplus.components.action_selectors import REGISTRY as action_REGISTRY
 from .n_controller import NMAC
 import torch as th
 import torch.nn.functional as F
