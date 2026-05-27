@@ -1,6 +1,7 @@
 import torch as th
 from torch.distributions import Categorical
 from .epsilon_schedules import DecayThenFlatSchedule
+import torch.nn.functional as F
 
 
 class MultinomialActionSelector:
