@@ -198,7 +198,11 @@ def run_sequential(args, logger):
     runner.setup(scheme=scheme, groups=groups, preprocess=preprocess, mac=mac, explorer=explorer)
 
     # Learner
-    learner = le_REGISTRY[args.learner](mac, buffer.scheme, logger, args)
+
+    if args.learner == "ices_nq_learner":
+        learner = le_REGISTRY[args.learner](mac, buffer.scheme, logger, args, env_info)
+    else:
+        learner = le_REGISTRY[args.learner](mac, buffer.scheme, logger, args)
     mac.learner = learner
 
     if args.use_cuda:
