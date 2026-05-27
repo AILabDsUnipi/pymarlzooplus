@@ -11,7 +11,7 @@ from .mat_learner import MATLearner
 from .maser_q_learner import  MASERQLearner
 from .maven_learner import MavenLearner
 from .commformer_learner import CommFormerLearner
-from .ices_learner  import ICESNQLearner
+from .ices_nq_learner  import ICESNQLearner
 
 REGISTRY = {
     "q_learner": QLearner,
@@ -27,5 +27,5 @@ REGISTRY = {
     "maser_q_learner": MASERQLearner,
     "maven_learner": MavenLearner,
     "commformer_learner": CommFormerLearner,
-    "ices_learner": CommFormerLearner,
+    "ices_nq_learner": ICESNQLearner,
 }
