@@ -139,6 +139,12 @@ def run_sequential(args, logger):
     # In the case of MAVEN, we need to add the noise vector dimension to the scheme
     if args.has_explorer is True and args.explorer == 'maven':
         scheme["noise"] = {"vshape": (args.noise_dim,)}
+    
+    # Set normalization for ICES
+    if "exp" in args.name:
+        norm_s = args.norm_s if hasattr(args, "norm_s") else False
+    else:
+        norm_s = False
         
     groups = {"agents": args.n_agents}
     preprocess = {"actions": ("actions_onehot", [OneHot(out_dim=args.n_actions)])}
@@ -286,6 +292,19 @@ def run_sequential(args, logger):
                 # In the case of EOI, train the explorer.
                 if args.explorer == 'eoi':
                     explorer.train(episode_sample)
+
+                # ICES variables
+                if "ices" in args.name:
+                    if norm_s:
+                        s_m, s_v = buffer.s_normalizer.running_mean_var()
+                        s_m = s_m.to(args.device)
+                        s_v = s_v.to(args.device)
+                    else:
+                        s_m, s_v = None, None
+                    learner.train(episode_sample, runner.t_env, episode, s_m=s_m, s_v=s_v)
+                else:
+                    learner.train(episode_sample, runner.t_env, episode)
+
 
                 # ICES TrainPolicies TrainScaffolds
                 if "ices" in args.name:
