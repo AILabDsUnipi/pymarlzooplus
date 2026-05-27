@@ -12,12 +12,12 @@ class ICESCritic(nn.Module):
         super(ICESCritic, self).__init__()
         self.args = args
 
-        self.fc1 = nn.Linear(input_shape, args.rnn_hidden_dim)
-        self.rnn = nn.GRUCell(args.rnn_hidden_dim, args.rnn_hidden_dim)
-        self.fc2 = nn.Linear(args.rnn_hidden_dim, 1)
+        self.fc1 = nn.Linear(input_shape, args.hidden_dim)
+        self.rnn = nn.GRUCell(args.hidden_dim, args.hidden_dim)
+        self.fc2 = nn.Linear(args.hidden_dim, 1)
 
         if getattr(args, "use_layer_norm", False):
-            self.layer_norm = LayerNorm(args.rnn_hidden_dim)
+            self.layer_norm = LayerNorm(args.hidden_dim)
 
         if getattr(args, "use_orthogonal", False):
             orthogonal_init_(self.fc1)
@@ -25,14 +25,14 @@ class ICESCritic(nn.Module):
 
     def init_hidden(self):
         # make hidden states on same device as model
-        return self.fc1.weight.new(1, self.args.rnn_hidden_dim).zero_()
+        return self.fc1.weight.new(1, self.args.hidden_dim).zero_()
 
     def forward(self, inputs, hidden_state):
         b, a, e = inputs.size()
 
         inputs = inputs.view(-1, e)
         x = F.relu(self.fc1(inputs), inplace=True)
-        h_in = hidden_state.reshape(-1, self.args.rnn_hidden_dim)
+        h_in = hidden_state.reshape(-1, self.args.hidden_dim)
         hh = self.rnn(x, h_in)
 
         if getattr(self.args, "use_layer_norm", False):
