@@ -15,5 +15,4 @@ results/
 **/lib/
 **/.DS_Store
 **/test_runs.log
-
-
+.python-version
