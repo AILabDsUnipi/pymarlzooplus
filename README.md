@@ -12,7 +12,7 @@
 
 
 
-PyMARLzoo+ is an extension of [EPyMARL](https://github.com/uoe-agents/epymarl), and includes
+PyMARLzoo+ is based on [EPyMARL](https://github.com/uoe-agents/epymarl), and includes
 - Additional (9) algorithms: 
   - HAPPO, 
   - MAT-DEC, 
