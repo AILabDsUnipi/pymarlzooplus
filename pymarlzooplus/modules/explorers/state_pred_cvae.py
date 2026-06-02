@@ -9,9 +9,6 @@ import torch.nn.functional as F
 import pyro
 import pyro.distributions as dist
 
-# TODO: Use different network structure other than MLP
-# ref: https://github.com/pyro-ppl/pyro/blob/dev/examples/cvae/cvae.py
-
 
 class StatePredBL(nn.Module):
     def __init__(self, args):

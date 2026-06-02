@@ -2,7 +2,6 @@ from pymarlzooplus.modules.agents import REGISTRY as agent_REGISTRY
 from pymarlzooplus.components.action_selectors import REGISTRY as action_REGISTRY
 from .basic_controller import BasicMAC
 import torch as th
-#from pymarlzooplus.utils.rl_utils import RunningMeanStd
 import numpy as np
 
 
