@@ -1,0 +1,41 @@
+# --- UPDeT + VDN parameters ---
+
+action_selector: "epsilon_greedy"
+epsilon_start: 1.0
+epsilon_finish: 0.05
+epsilon_anneal_time: 50000
+evaluation_epsilon: 0.0
+
+runner: "episode"
+
+# Buffer
+buffer_size: 5000
+prioritized_buffer: False
+prioritized_buffer_alpha: 0.6
+
+target_update_interval_or_tau: 200
+
+obs_agent_id: False
+obs_last_action: False
+obs_individual_obs: False
+
+standardise_returns: False
+standardise_rewards: True
+
+agent_output_type: "q"
+learner: "q_learner"
+double_q: True
+mixer: "vdn"
+
+# Agent
+agent: "updet"
+mac: "updet_mac"
+
+# Transformer hyperparameters
+# ΣΗΜΑΝΤΙΚΟ: obs_dim % token_dim == 0
+token_dim: 5     # πρέπει να διαιρεί το obs_dim του env (LBF: 15/5=3 tokens)
+emb: 32
+heads: 4
+depth: 2
+
+name: "updet_vdn"

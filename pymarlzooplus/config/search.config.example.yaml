@@ -4,6 +4,8 @@ grid-search:
   "--config":
     - "iql"
     - "iql_ns"
+    - "updet_qmix"
+    - "updet_vdn"
 
   lr:
     - 0.0001
@@ -85,3 +87,5 @@ plotting:
     "vdn_ns": "VDN_ns"
     "maven": "MAVEN"
     "commformer": "CommFormer"
+    "updet_qmix": "UPDeT-QMIX"
+    "updet_vdn": "UPDeT-VDN"
