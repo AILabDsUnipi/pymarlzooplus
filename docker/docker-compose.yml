@@ -6,3 +6,6 @@ services:
     image: ailabdsunipi/pymarlzooplus:v1.1.0
     network_mode: host
     command: tail -f /dev/null
+    # Uncomment to mount the local directory to the container for development
+    # volumes:
+    #     - ..:/opt/pymarlzooplus

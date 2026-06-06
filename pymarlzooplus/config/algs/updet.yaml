@@ -1,4 +1,5 @@
-# --- UPDeT + VDN parameters ---
+# --- UPDeT parameters ---
+# Switch between QMIX and VDN by changing the "mixer" parameter below.
 
 action_selector: "epsilon_greedy"
 epsilon_start: 1.0
@@ -25,17 +26,20 @@ standardise_rewards: True
 agent_output_type: "q"
 learner: "q_learner"
 double_q: True
-mixer: "vdn"
+mixer: "qmix"    # change to "vdn" to use VDN instead
+mixing_embed_dim: 32
+hypernet_layers: 2
+hypernet_embed: 64
 
 # Agent
 agent: "updet"
 mac: "updet_mac"
 
 # Transformer hyperparameters
-# ΣΗΜΑΝΤΙΚΟ: obs_dim % token_dim == 0
-token_dim: 5     # πρέπει να διαιρεί το obs_dim του env (LBF: 15/5=3 tokens)
+# obs is zero-padded in the controller to the nearest multiple of token_dim
+token_dim: 5
 emb: 32
 heads: 4
 depth: 2
 
-name: "updet_vdn"
+name: "updet"

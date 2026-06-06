@@ -83,6 +83,20 @@ class Transformer(nn.Module):
 
 
 class UPDeT(nn.Module):
+    # Adapted from the original UPDeT (SMAC) for gymma environments (LBF, RWARE, MPE).
+    #
+    # What was removed vs. the original and why:
+    #   - Policy decoupling (separate heads for ally/enemy/self actions): gymma envs have
+    #     homogeneous agents with a shared, fixed action space and no opponent agents, so
+    #     per-entity action heads are meaningless.
+    #   - ally_num / enemy_num inputs: entity counts are not needed, the number of tokens
+    #     is derived automatically as obs_dim // token_dim.
+    #   - Aggregation (mean-pool) forward: the paper shows Aggregation Transformer < GRU,
+    #     so we use the self-token output only.
+    #
+    # What we keep:
+    #   - Self-token output: after attention, token[0] (the agent's own token) aggregates
+    #     context from all other tokens and is passed through a linear layer to produce Q-values.
     def __init__(self, input_shape, args):
         super(UPDeT, self).__init__()
         self.args = args
@@ -95,8 +109,8 @@ class UPDeT(nn.Module):
     def forward(self, inputs, hidden_state):
         outputs, _ = self.transformer.forward(inputs, hidden_state, None)
 
-        # self token — enriched via attention over all entities
+        # Self token (index 0) is enriched via attention over all entity tokens.
         q = self.q_linear(outputs[:, 0, :])   # (batch, n_actions)
-        h = outputs[:, -1:, :]                 # (batch, 1, emb)
+        h = outputs[:, -1:, :]                 # (batch, 1, emb) — recurrent hidden state
 
         return q, h
