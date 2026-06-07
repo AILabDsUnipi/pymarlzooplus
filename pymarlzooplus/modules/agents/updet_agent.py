@@ -4,17 +4,16 @@ import torch.nn.functional as F
 
 
 class SelfAttention(nn.Module):
-    def __init__(self, emb, heads=8, mask=False):
+    def __init__(self, emb, heads=8):
         super().__init__()
         self.emb = emb
         self.heads = heads
-        self.mask = mask
         self.tokeys = nn.Linear(emb, emb * heads, bias=False)
         self.toqueries = nn.Linear(emb, emb * heads, bias=False)
         self.tovalues = nn.Linear(emb, emb * heads, bias=False)
         self.unifyheads = nn.Linear(heads * emb, emb)
 
-    def forward(self, x, mask):
+    def forward(self, x):
         b, t, e = x.size()
         h = self.heads
         keys = self.tokeys(x).view(b, t, h, e)
@@ -31,9 +30,6 @@ class SelfAttention(nn.Module):
         dot = torch.bmm(queries, keys.transpose(1, 2))
         assert dot.size() == (b * h, t, t)
 
-        if mask is not None:
-            dot = dot.masked_fill(mask == 0, -1e9)
-
         dot = F.softmax(dot, dim=2)
         out = torch.bmm(dot, values).view(b, h, t, e)
         out = out.transpose(1, 2).contiguous().view(b, t, h * e)
@@ -41,9 +37,9 @@ class SelfAttention(nn.Module):
 
 
 class TransformerBlock(nn.Module):
-    def __init__(self, emb, heads, mask, ff_hidden_mult=4, dropout=0.0):
+    def __init__(self, emb, heads, ff_hidden_mult=4, dropout=0.0):
         super().__init__()
-        self.attention = SelfAttention(emb, heads=heads, mask=mask)
+        self.attention = SelfAttention(emb, heads=heads)
         self.norm1 = nn.LayerNorm(emb)
         self.norm2 = nn.LayerNorm(emb)
         self.ff = nn.Sequential(
@@ -53,15 +49,14 @@ class TransformerBlock(nn.Module):
         )
         self.do = nn.Dropout(dropout)
 
-    def forward(self, x_mask):
-        x, mask = x_mask
-        attended = self.attention(x, mask)
+    def forward(self, x):
+        attended = self.attention(x)
         x = self.norm1(attended + x)
         x = self.do(x)
         fedforward = self.ff(x)
         x = self.norm2(fedforward + x)
         x = self.do(x)
-        return x, mask
+        return x
 
 
 class Transformer(nn.Module):
@@ -69,15 +64,15 @@ class Transformer(nn.Module):
         super().__init__()
         self.num_tokens = output_dim
         self.token_embedding = nn.Linear(input_dim, emb)
-        tblocks = [TransformerBlock(emb=emb, heads=heads, mask=False) for _ in range(depth)]
+        tblocks = [TransformerBlock(emb=emb, heads=heads) for _ in range(depth)]
         self.tblocks = nn.Sequential(*tblocks)
         self.toprobs = nn.Linear(emb, output_dim)
 
-    def forward(self, x, h, mask):
+    def forward(self, x, h):
         tokens = self.token_embedding(x)
         tokens = torch.cat((tokens, h), 1)
         b, t, e = tokens.size()
-        x, mask = self.tblocks((tokens, mask))
+        x = self.tblocks(tokens)
         x = self.toprobs(x.view(b * t, e)).view(b, t, self.num_tokens)
         return x, tokens
 
@@ -93,6 +88,10 @@ class UPDeT(nn.Module):
     #     is derived automatically as obs_dim // token_dim.
     #   - Aggregation (mean-pool) forward: the paper shows Aggregation Transformer < GRU,
     #     so we use the self-token output only.
+    #   - PRESERVE and ABANDON (paper §4.2): these modes carry entity token representations
+    #     across timesteps. Dropped because gymma envs use a flat obs vector with no explicit
+    #     entity structure that benefits from per-entity recurrence — the single recurrent
+    #     hidden-state token (index -1) is sufficient.
     #
     # What we keep:
     #   - Self-token output: after attention, token[0] (the agent's own token) aggregates
@@ -107,7 +106,7 @@ class UPDeT(nn.Module):
         return self.transformer.token_embedding.weight.new(1, self.args.emb).zero_()
 
     def forward(self, inputs, hidden_state):
-        outputs, _ = self.transformer.forward(inputs, hidden_state, None)
+        outputs, _ = self.transformer.forward(inputs, hidden_state)
 
         # Self token (index 0) is enriched via attention over all entity tokens.
         q = self.q_linear(outputs[:, 0, :])   # (batch, n_actions)

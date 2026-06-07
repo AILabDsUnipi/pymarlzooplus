@@ -5,8 +5,14 @@ from pymarlzooplus.controllers.basic_controller import BasicMAC
 
 class UPDeTMAC(BasicMAC):
 
+    def __init__(self, scheme, groups, args):
+        assert not args.obs_agent_id, "UPDeTMAC does not support obs_agent_id"
+        assert not args.obs_last_action, "UPDeTMAC does not support obs_last_action"
+        assert not args.obs_individual_obs, "UPDeTMAC does not support obs_individual_obs"
+        super().__init__(scheme, groups, args)
+
     def forward(self, ep_batch, t, test_mode=False):
-        agent_inputs = self._build_inputs_transformer(ep_batch, t)
+        agent_inputs = self._build_inputs(ep_batch, t)
         agent_outs, self.hidden_states = self.agent(
             agent_inputs,
             self.hidden_states.reshape(-1, 1, self.args.emb)
@@ -19,7 +25,7 @@ class UPDeTMAC(BasicMAC):
             batch_size, self.n_agents, 1, -1
         ).clone()
 
-    def _build_inputs_transformer(self, batch, t):
+    def _build_inputs(self, batch, t):
         bs = batch.batch_size
         raw_obs = batch["obs"][:, t]                              # (bs, n_agents, obs_dim)
 
