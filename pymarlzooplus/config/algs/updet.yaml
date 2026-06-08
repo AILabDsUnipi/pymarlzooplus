@@ -36,8 +36,6 @@ agent: "updet"
 mac: "updet_mac"
 
 # Transformer hyperparameters
-# obs is zero-padded in the controller to the nearest multiple of token_dim
-token_dim: 5
 emb: 32
 heads: 4
 depth: 2

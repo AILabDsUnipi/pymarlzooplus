@@ -1,5 +1,4 @@
 import torch as th
-import torch.nn.functional as F
 from pymarlzooplus.controllers.basic_controller import BasicMAC
 
 
@@ -27,14 +26,11 @@ class UPDeTMAC(BasicMAC):
 
     def _build_inputs(self, batch, t):
         bs = batch.batch_size
-        raw_obs = batch["obs"][:, t]                              # (bs, n_agents, obs_dim)
+        raw_obs = batch["obs"][:, t]  # (bs, n_agents, obs_dim)
+        n = self.n_agents
 
-        # Pad obs_dim to the nearest multiple of token_dim so reshape is always valid.
-        # This is needed for envs whose obs_dim is not divisible by token_dim (e.g. RWARE: 71).
-        obs_dim = raw_obs.shape[-1]
-        remainder = obs_dim % self.args.token_dim
-        if remainder != 0:
-            raw_obs = F.pad(raw_obs, (0, self.args.token_dim - remainder))
-
-        n_tokens = raw_obs.shape[-1] // self.args.token_dim
-        return raw_obs.reshape(bs * self.n_agents, n_tokens, self.args.token_dim)
+        # Token = each agent's full observation. For agent i, own obs is placed at index 0
+        # (the self-token); other agents fill indices 1..n-1 in circular order.
+        agent_idx = th.arange(n, device=raw_obs.device)
+        idx = (agent_idx.unsqueeze(1) + agent_idx.unsqueeze(0)) % n  # (n_agents, n_agents)
+        return raw_obs[:, idx, :].reshape(bs * n, n, raw_obs.shape[-1])

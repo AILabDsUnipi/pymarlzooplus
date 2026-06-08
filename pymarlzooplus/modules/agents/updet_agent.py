@@ -99,7 +99,7 @@ class UPDeT(nn.Module):
     def __init__(self, input_shape, args):
         super(UPDeT, self).__init__()
         self.args = args
-        self.transformer = Transformer(args.token_dim, args.emb, args.heads, args.depth, args.emb)
+        self.transformer = Transformer(input_shape, args.emb, args.heads, args.depth, args.emb)
         self.q_linear = nn.Linear(args.emb, args.n_actions)
 
     def init_hidden(self):
