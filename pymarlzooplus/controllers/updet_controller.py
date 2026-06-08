@@ -26,11 +26,12 @@ class UPDeTMAC(BasicMAC):
 
     def _build_inputs(self, batch, t):
         bs = batch.batch_size
-        raw_obs = batch["obs"][:, t]  # (bs, n_agents, obs_dim)
         n = self.n_agents
+        raw_obs = batch["obs"][:, t]  # (bs, n_agents, obs_dim)
+        obs_dim = raw_obs.shape[-1]
 
         # Token = each agent's full observation. For agent i, own obs is placed at index 0
         # (the self-token); other agents fill indices 1..n-1 in circular order.
         agent_idx = th.arange(n, device=raw_obs.device)
         idx = (agent_idx.unsqueeze(1) + agent_idx.unsqueeze(0)) % n  # (n_agents, n_agents)
-        return raw_obs[:, idx, :].reshape(bs * n, n, raw_obs.shape[-1])
+        return raw_obs[:, idx, :].reshape(bs * n, n, obs_dim)

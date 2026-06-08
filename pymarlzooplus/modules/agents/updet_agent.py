@@ -81,7 +81,7 @@ class UPDeT(nn.Module):
     # Adapted from the original UPDeT (SMAC) for gymma environments (LBF, RWARE, MPE).
     #
     # What was removed vs. the original and why:
-    #   - Policy decoupling (separate heads for ally/enemy/self actions): gymma envs have
+    #   - Policy decoupling (separate heads for ally/enemy/self actions): pymarlzoo+ envs have
     #     homogeneous agents with a shared, fixed action space and no opponent agents, so
     #     per-entity action heads are meaningless.
     #   - ally_num / enemy_num inputs: entity counts are not needed, the number of tokens
@@ -89,7 +89,7 @@ class UPDeT(nn.Module):
     #   - Aggregation (mean-pool) forward: the paper shows Aggregation Transformer < GRU,
     #     so we use the self-token output only.
     #   - PRESERVE and ABANDON (paper §4.2): these modes carry entity token representations
-    #     across timesteps. Dropped because gymma envs use a flat obs vector with no explicit
+    #     across timesteps. Dropped because pymarlzoo+ envs use a flat obs vector with no explicit
     #     entity structure that benefits from per-entity recurrence — the single recurrent
     #     hidden-state token (index -1) is sufficient.
     #
