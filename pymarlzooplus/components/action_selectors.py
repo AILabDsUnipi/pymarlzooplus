@@ -94,7 +94,7 @@ class SoftPoliciesSelector:
         return picked_actions
 
 
-class EpsilonExplActionSelector:
+class ICESActionSelector:
     def __init__(self, args):
         self.args = args
 
@@ -156,5 +156,5 @@ REGISTRY = {
     "epsilon_greedy": EpsilonGreedyActionSelector,
     "multinomial": MultinomialActionSelector,
     "soft_policies": SoftPoliciesSelector,
-    "epsilon_expl": EpsilonExplActionSelector,
+    "epsilon_expl": ICESActionSelector,
 }
