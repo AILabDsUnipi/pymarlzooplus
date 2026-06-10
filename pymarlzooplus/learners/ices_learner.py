@@ -26,13 +26,13 @@ import pyro
 from pyro.infer import SVI, Trace_ELBO
 
 # Modules
-from pymarlzooplus.modules.explorers.state_pred_cvae import StatePredBL, StatePredCVAE
+from pymarlzooplus.modules.explorers.ICES import StatePredBL, StatePredCVAE
 
 # Critics
 from pymarlzooplus.modules.critics.ices_critic import ICESCritic
 
 
-class ICESNQLearner:
+class ICESLearner:
     def __init__(self, mac, scheme, logger, args, env_info):
         self.args = args
         self.mac = mac
@@ -74,41 +74,21 @@ class ICESNQLearner:
             baseline_net_local=self.world_bl_local,
         )
 
-        if self.args.optimizer == "adam":
-            self.optimiser = Adam(
-                params=self.params,
-                lr=args.lr,
-                weight_decay=getattr(args, "weight_decay", 0),
-            )
-            self.int_optimiser = Adam(
-                params=self.int_params,
-                lr=args.int_lr,
-                weight_decay=getattr(args, "weight_decay", 0),
-            )
-            self.int_c_optimiser = Adam(
-                params=self.int_critic.parameters(),
-                lr=args.int_c_lr,
-                weight_decay=getattr(args, "weight_decay", 0),
-            )
-        else:
-            self.optimiser = RMSprop(
-                params=self.params,
-                lr=args.lr,
-                alpha=args.optim_alpha,
-                eps=args.optim_eps,
-            )
-            self.int_optimiser = RMSprop(
-                params=self.int_params,
-                lr=args.int_lr,
-                alpha=args.optim_alpha,
-                eps=args.optim_eps,
-            )
-            self.int_c_optimiser = RMSprop(
-                params=self.int_critic.parameters(),
-                lr=args.int_c_lr,
-                alpha=args.optim_alpha,
-                eps=args.optim_eps,
-            )
+        self.optimiser = Adam(
+            params=self.params,
+            lr=args.lr,
+            weight_decay=getattr(args, "weight_decay", 0),
+        )
+        self.int_optimiser = Adam(
+            params=self.int_params,
+            lr=args.int_lr,
+            weight_decay=getattr(args, "weight_decay", 0),
+        )
+        self.int_c_optimiser = Adam(
+            params=self.int_critic.parameters(),
+            lr=args.int_c_lr,
+            weight_decay=getattr(args, "weight_decay", 0),
+        )
 
         self.world_bl_optimizer_global = th.optim.Adam(
             self.world_model.baseline_net_global.parameters(),
