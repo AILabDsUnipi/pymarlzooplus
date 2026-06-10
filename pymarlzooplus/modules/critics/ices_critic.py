@@ -3,8 +3,6 @@ import torch.nn.functional as F
 import torch as th
 import numpy as np
 import torch.nn.init as init
-from pymarlzooplus.utils.torch_utils import orthogonal_init_
-from torch.nn import LayerNorm
 
 
 class ICESCritic(nn.Module):
@@ -15,13 +13,6 @@ class ICESCritic(nn.Module):
         self.fc1 = nn.Linear(input_shape, args.hidden_dim)
         self.rnn = nn.GRUCell(args.hidden_dim, args.hidden_dim)
         self.fc2 = nn.Linear(args.hidden_dim, 1)
-
-        if getattr(args, "use_layer_norm", False):
-            self.layer_norm = LayerNorm(args.hidden_dim)
-
-        if getattr(args, "use_orthogonal", False):
-            orthogonal_init_(self.fc1)
-            orthogonal_init_(self.fc2, gain=args.gain)
 
     def init_hidden(self):
         # make hidden states on same device as model
@@ -35,10 +26,7 @@ class ICESCritic(nn.Module):
         h_in = hidden_state.reshape(-1, self.args.hidden_dim)
         hh = self.rnn(x, h_in)
 
-        if getattr(self.args, "use_layer_norm", False):
-            q = self.fc2(self.layer_norm(hh))
-        else:
-            q = self.fc2(hh)
+        q = self.fc2(hh)
 
         return q.view(b, a, -1), hh.view(b, a, -1)
 
