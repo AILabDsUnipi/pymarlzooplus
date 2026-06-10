@@ -7,7 +7,6 @@ from .emc_controller import emcMAC
 from .cds_controller import cdsMAC
 from .maven_controller import Maven
 from .commformer_controller import CommFormerMAC
-from .n_controller import NMAC
 from .ices_n_controller import ICESNMAC
 
 REGISTRY = {
@@ -20,7 +19,6 @@ REGISTRY = {
         "cds_mac": cdsMAC,
         "maven_mac": Maven,
         "commformer_mac": CommFormerMAC,
-        "ices_n_mac": ICESNMAC,
-        "n_mac": NMAC
+        "ices_mac": ICESNMAC,
 }
 
