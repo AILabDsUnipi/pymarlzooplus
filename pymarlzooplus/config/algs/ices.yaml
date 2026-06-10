@@ -18,7 +18,7 @@ t_max: 10050000
 target_update_interval: 200
 
 # use the Q_Learner to train
-mac: "ices_n_mac"
+mac: "ices_mac"
 agent: "n_rnn"
 agent_output_type: q
 
