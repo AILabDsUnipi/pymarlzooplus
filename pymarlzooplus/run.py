@@ -293,7 +293,7 @@ def run_sequential(args, logger):
                 if args.explorer == 'eoi':
                     explorer.train(episode_sample)
 
-                # ICES variables
+                # ICES state variables variables
                 if "ices" in args.name:
                     if norm_s:
                         s_m, s_v = buffer.s_normalizer.running_mean_var()
@@ -301,10 +301,6 @@ def run_sequential(args, logger):
                         s_v = s_v.to(args.device)
                     else:
                         s_m, s_v = None, None
-                    learner.train(episode_sample, runner.t_env, episode, s_m=s_m, s_v=s_v)
-                else:
-                    learner.train(episode_sample, runner.t_env, episode)
-
 
                 # ICES TrainPolicies TrainScaffolds
                 if "ices" in args.name:
@@ -342,7 +338,10 @@ def run_sequential(args, logger):
                     if args.use_emdqn is True:  # Episodic Memory
                         learner.train(episode_sample, runner.t_env, episode, ec_buffer=ec_buffer)
                     else:
-                        learner.train(episode_sample, runner.t_env, episode)
+                        if "ices" in args.name:
+                            learner.train(episode_sample, runner.t_env, episode, s_m=s_m, s_v=s_v)
+                        else:
+                            learner.train(episode_sample, runner.t_env, episode)
 
         # Execute test runs once in a while
         n_test_runs = max(1, args.test_nepisode // runner.batch_size)
