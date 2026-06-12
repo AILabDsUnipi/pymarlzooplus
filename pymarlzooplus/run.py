@@ -198,7 +198,6 @@ def run_sequential(args, logger):
     runner.setup(scheme=scheme, groups=groups, preprocess=preprocess, mac=mac, explorer=explorer)
 
     # Learner
-
     if args.learner == "ices_learner":
         learner = le_REGISTRY[args.learner](mac, buffer.scheme, logger, args, env_info)
     else:

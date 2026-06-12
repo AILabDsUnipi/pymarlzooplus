@@ -21,7 +21,7 @@ mac: "ices_mac"
 agent: "n_rnn"
 agent_output_type: q
 
-learner: "ices_nq_learner"
+learner: "ices_learner"
 mixer: "qmix"
 mixing_embed_dim: 32
 hypernet_embed: 64

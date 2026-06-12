@@ -27,5 +27,5 @@ REGISTRY = {
     "maser_q_learner": MASERQLearner,
     "maven_learner": MavenLearner,
     "commformer_learner": CommFormerLearner,
-    "ices_nq_learner": ICESLearner,
+    "ices_learner": ICESLearner,
 }
