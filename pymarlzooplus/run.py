@@ -286,24 +286,6 @@ def run_sequential(args, logger):
                 if args.explorer == 'eoi':
                     explorer.train(episode_sample)
 
-                # ICES TrainPolicies TrainScaffolds
-                if "ices" in args.name:
-                    episode_sample = buffer.sample(args.batch_size)
-                    # Truncate batch to only filled timesteps
-                    max_ep_t = episode_sample.max_t_filled()
-                    episode_sample = episode_sample[:, :max_ep_t]
-                    if episode_sample.device != args.device:
-                        episode_sample.to(args.device)
-                    learner.train_world(episode_sample, runner.t_env)
-
-                    episode_sample = buffer.sample(args.batch_size)
-                    # Truncate batch to only filled timesteps
-                    max_ep_t = episode_sample.max_t_filled()
-                    episode_sample = episode_sample[:, :max_ep_t]
-                    if episode_sample.device != args.device:
-                        episode_sample.to(args.device)
-                    learner.train_world(episode_sample, runner.t_env)
-
                 # Truncate batch to only filled timesteps
                 max_ep_t = episode_sample.max_t_filled()
                 episode_sample = episode_sample[:, :max_ep_t]
@@ -324,6 +306,24 @@ def run_sequential(args, logger):
                     else:
                         if "ices" in args.name:
                             learner.train(episode_sample, runner.t_env, episode)
+
+                        # ICES TrainPolicies TrainScaffolds
+                            episode_sample = buffer.sample(args.batch_size)
+                            # Truncate batch to only filled timesteps
+                            max_ep_t = episode_sample.max_t_filled()
+                            episode_sample = episode_sample[:, :max_ep_t]
+                            if episode_sample.device != args.device:
+                                episode_sample.to(args.device)
+                            learner.train_world(episode_sample, runner.t_env)
+
+                            episode_sample = buffer.sample(args.batch_size)
+                            # Truncate batch to only filled timesteps
+                            max_ep_t = episode_sample.max_t_filled()
+                            episode_sample = episode_sample[:, :max_ep_t]
+                            if episode_sample.device != args.device:
+                                episode_sample.to(args.device)
+                            learner.train_world(episode_sample, runner.t_env)
+
 
         # Execute test runs once in a while
         n_test_runs = max(1, args.test_nepisode // runner.batch_size)
