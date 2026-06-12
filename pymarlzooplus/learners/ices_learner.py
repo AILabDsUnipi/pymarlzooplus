@@ -151,7 +151,7 @@ class ICESLearner:
             self.priority_max = float("-inf")
             self.priority_min = float("inf")
 
-    def train_world(self, batch: EpisodeBatch, t_env: int, s_m=None, s_v=None):
+    def train_world(self, batch: EpisodeBatch, t_env: int):
         # update two model iteratively
         n_mini = self.pred_s_len
         idxes = np.arange(1, n_mini + 1)
@@ -181,8 +181,6 @@ class ICESLearner:
                 bs, seq_len_cut, _ = s_prime.shape
                 s_ori = s[:, :seq_len_cut, :]
                 s_diff = (s_prime - s_ori).reshape(bs * seq_len_cut, -1)
-                if s_m is not None:
-                    s_diff = (s_diff - s_m) / th.sqrt(s_v)
                 s_ori = s_ori.reshape(bs * seq_len_cut, -1)
                 a_all = a[:, :seq_len_cut, :].reshape(bs * seq_len_cut, -1)
                 mask_sample = mask[:, :seq_len_cut, :].reshape(bs * seq_len_cut, -1)
@@ -239,8 +237,6 @@ class ICESLearner:
                 bs, seq_len_cut, _ = s_prime.shape
                 s_ori = s[:, :seq_len_cut, :]
                 s_diff = (s_prime - s_ori).reshape(bs * seq_len_cut, -1)
-                if s_m is not None:
-                    s_diff = (s_diff - s_m) / th.sqrt(s_v)
                 s_ori = s_ori.reshape(bs * seq_len_cut, -1)
                 a_all = a[:, :seq_len_cut, :].reshape(bs * seq_len_cut, -1)
                 mask_sample = mask[:, :seq_len_cut, :].reshape(bs * seq_len_cut, -1)
@@ -300,8 +296,6 @@ class ICESLearner:
         t_env: int,
         episode_num: int,
         per_weight=None,
-        s_m=None,
-        s_v=None,
     ):
         # Get the relevant quantities
         rewards = batch["reward"][:, :-1]
