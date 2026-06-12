@@ -140,12 +140,6 @@ def run_sequential(args, logger):
     if args.has_explorer is True and args.explorer == 'maven':
         scheme["noise"] = {"vshape": (args.noise_dim,)}
     
-    # Set normalization for ICES
-    if "exp" in args.name:
-        norm_s = args.norm_s if hasattr(args, "norm_s") else False
-    else:
-        norm_s = False
-        
     groups = {"agents": args.n_agents}
     preprocess = {"actions": ("actions_onehot", [OneHot(out_dim=args.n_actions)])}
 
@@ -205,7 +199,7 @@ def run_sequential(args, logger):
 
     # Learner
 
-    if args.learner == "ices_nq_learner":
+    if args.learner == "ices_learner":
         learner = le_REGISTRY[args.learner](mac, buffer.scheme, logger, args, env_info)
     else:
         learner = le_REGISTRY[args.learner](mac, buffer.scheme, logger, args)
@@ -293,15 +287,6 @@ def run_sequential(args, logger):
                 if args.explorer == 'eoi':
                     explorer.train(episode_sample)
 
-                # ICES state variables variables
-                if "ices" in args.name:
-                    if norm_s:
-                        s_m, s_v = buffer.s_normalizer.running_mean_var()
-                        s_m = s_m.to(args.device)
-                        s_v = s_v.to(args.device)
-                    else:
-                        s_m, s_v = None, None
-
                 # ICES TrainPolicies TrainScaffolds
                 if "ices" in args.name:
                     episode_sample = buffer.sample(args.batch_size)
@@ -310,7 +295,7 @@ def run_sequential(args, logger):
                     episode_sample = episode_sample[:, :max_ep_t]
                     if episode_sample.device != args.device:
                         episode_sample.to(args.device)
-                    learner.train_world(episode_sample, runner.t_env, s_m, s_v)
+                    learner.train_world(episode_sample, runner.t_env)
 
                     episode_sample = buffer.sample(args.batch_size)
                     # Truncate batch to only filled timesteps
@@ -318,7 +303,7 @@ def run_sequential(args, logger):
                     episode_sample = episode_sample[:, :max_ep_t]
                     if episode_sample.device != args.device:
                         episode_sample.to(args.device)
-                    learner.train_world(episode_sample, runner.t_env, s_m, s_v)
+                    learner.train_world(episode_sample, runner.t_env)
 
                 # Truncate batch to only filled timesteps
                 max_ep_t = episode_sample.max_t_filled()
@@ -339,8 +324,6 @@ def run_sequential(args, logger):
                         learner.train(episode_sample, runner.t_env, episode, ec_buffer=ec_buffer)
                     else:
                         if "ices" in args.name:
-                            learner.train(episode_sample, runner.t_env, episode, s_m=s_m, s_v=s_v)
-                        else:
                             learner.train(episode_sample, runner.t_env, episode)
 
         # Execute test runs once in a while
