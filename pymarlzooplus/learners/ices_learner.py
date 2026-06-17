@@ -5,7 +5,7 @@ from pymarlzooplus.components.episode_buffer import EpisodeBatch
 
 # Mixers
 from pymarlzooplus.modules.mixers.vdn import VDNMixer
-from pymarlzooplus.modules.mixers.nmix import Mixer
+from pymarlzooplus.modules.mixers.qmix import QMixer
 from pymarlzooplus.modules.mixers.qatten import QattenMixer
 
 # Utils
@@ -47,14 +47,7 @@ class ICESLearner:
 
         self.device = th.device("cuda" if args.use_cuda else "cpu")
 
-        if args.mixer == "qatten":
-            self.mixer = QattenMixer(args)
-        elif args.mixer == "vdn":
-            self.mixer = VDNMixer()
-        elif args.mixer == "qmix":
-            self.mixer = Mixer(args)
-        else:
-            raise "mixer error"
+        self.mixer = QMixer(args)
         self.target_mixer = copy.deepcopy(self.mixer)
         self.params += list(self.mixer.parameters())
         self.int_params = list(mac.int_parameters())
