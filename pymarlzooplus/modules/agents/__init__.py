@@ -6,7 +6,7 @@ from .rnn_agent_emc import RNNAgentEMC
 from .rnn_agent_cds import RNNAgentCDS
 from .rnn_maven_agent import RNNAgentMaven
 from .commformer_agent import CommFormerAgent
-from .ices_agent import NRNNAgent
+from .ices_agent import ICESAgent
 
 REGISTRY = {
     "rnn": RNNAgent,
@@ -17,7 +17,5 @@ REGISTRY = {
     "rnn_cds": RNNAgentCDS,
     "rnn_maven": RNNAgentMaven,
     "commformer_agent": CommFormerAgent,
-    "n_rnn": NRNNAgent
+    "n_rnn": ICESAgent
 }
-
-

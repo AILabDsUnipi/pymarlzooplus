@@ -6,9 +6,9 @@ import torch.nn.init as init
 from pymarlzooplus.utils.torch_utils import orthogonal_init_
 from torch.nn import LayerNorm
 
-class NRNNAgent(nn.Module):
+class ICESAgent(nn.Module):
     def __init__(self, input_shape, args):
-        super(NRNNAgent, self).__init__()
+        super(ICESAgent, self).__init__()
         self.args = args
 
         self.fc1 = nn.Linear(input_shape, args.hidden_dim)
