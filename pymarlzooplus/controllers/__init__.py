@@ -7,7 +7,7 @@ from .emc_controller import emcMAC
 from .cds_controller import cdsMAC
 from .maven_controller import Maven
 from .commformer_controller import CommFormerMAC
-from .ices_n_controller import ICESNMAC
+from .ices_controller import ICESNMAC
 
 REGISTRY = {
         "basic_mac": BasicMAC,
