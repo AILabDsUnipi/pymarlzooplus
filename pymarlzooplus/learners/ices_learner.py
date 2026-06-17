@@ -1,5 +1,3 @@
-# ICES NQ-Learner
-
 import copy
 from pymarlzooplus.components.episode_buffer import EpisodeBatch
 
@@ -11,17 +9,17 @@ from pymarlzooplus.modules.mixers.qatten import QattenMixer
 # Utils
 from pymarlzooplus.utils.rl_utils import build_td_lambda_targets, build_q_lambda_targets
 from pymarlzooplus.utils.torch_utils import get_parameters_num
-from pymarlzooplus.utils.helper_func import KL_div, get_gard_norm
 
 # Torch
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.optim import RMSprop, Adam
+from torch.optim import Adam
 
 # Misc
 import numpy as np
-
+import math
+import torch
 import pyro
 from pyro.infer import SVI, Trace_ELBO
 
@@ -191,7 +189,7 @@ class ICESLearner:
                 self.world_bl_optimizer_global.step()
 
                 # learn prediction network
-                world_grad_norm = get_gard_norm(self.world_model.parameters())
+                world_grad_norm = self.get_gard_norm(self.world_model.parameters())
                 pred_loss_global = self.world_svi_global.step(
                     s_ori * mask_sample,
                     (a_all * mask_sample).long(),
@@ -254,7 +252,7 @@ class ICESLearner:
                 self.world_bl_optimizer_local.step()
 
                 # learn prediction network
-                world_grad_norm = get_gard_norm(self.world_model.parameters())
+                world_grad_norm = self.get_gard_norm(self.world_model.parameters())
                 pred_loss_local = self.world_svi_local.step(
                     s_ori * mask_sample,
                     (a_masked * mask_sample).long(),
@@ -439,7 +437,7 @@ class ICESLearner:
             global_sigma = global_sigma.reshape(bs * seq_len, 1, -1)
             local_mu = local_mu.reshape(bs * seq_len, n_agents, -1)
             local_sigma = local_sigma.reshape(bs * seq_len, n_agents, -1)
-            div = KL_div(global_mu, global_sigma, local_mu, local_sigma)
+            div = self.KL_div(global_mu, global_sigma, local_mu, local_sigma)
             # normalize in an ugly way
             div = 1.0 - th.exp(-div)
 
@@ -579,4 +577,31 @@ class ICESLearner:
         self.optimiser.load_state_dict(
             th.load("{}/opt.th".format(path), map_location=lambda storage, loc: storage)
         )
+    
+    def KL_div(self, p_mu, p_sigma, q_mu, q_sigma):
+        """_summary_
+        Args:
+            p_mu (bs, dist_dim): _description_
+            p_sigma (bs, dist_dim): _description_
+            q_mu (bs, dist_dim): _description_
+            q_sigma (bs, dist_dim): _description_
+        """
+
+        div = (
+            torch.log2(q_sigma)
+            - torch.log2(p_sigma)
+            + (p_sigma**2 + (p_mu - q_mu) ** 2) / (2 * q_sigma**2)
+            - 0.5
+        )
+        div = div.mean(dim=-1)
+        return div
+
+    def get_gard_norm(self, it):
+        sum_grad = 0
+        for x in it:
+            if x.grad is None:
+                continue
+            sum_grad += x.grad.norm() ** 2
+        return math.sqrt(sum_grad)
+
 
