@@ -2,13 +2,7 @@ import copy
 from pymarlzooplus.components.episode_buffer import EpisodeBatch
 
 # Mixers
-from pymarlzooplus.modules.mixers.vdn import VDNMixer
 from pymarlzooplus.modules.mixers.qmix import QMixer
-from pymarlzooplus.modules.mixers.qatten import QattenMixer
-
-# Utils
-from pymarlzooplus.utils.rl_utils import build_td_lambda_targets, build_q_lambda_targets
-from pymarlzooplus.utils.torch_utils import get_parameters_num
 
 # Torch
 import torch as th
@@ -55,7 +49,7 @@ class ICESLearner:
         )
 
         print("Mixer Size: ")
-        print(get_parameters_num(self.mixer.parameters()))
+        print(self.get_parameters_num(self.mixer.parameters()))
 
         self.world_bl_global = StatePredBL(args)
         self.world_bl_local = StatePredBL(args)
@@ -338,7 +332,7 @@ class ICESLearner:
                 qvals = th.gather(target_mac_out, 3, batch["actions"]).squeeze(3)
                 qvals = self.target_mixer(qvals, batch["state"])
 
-                targets = build_q_lambda_targets(
+                targets = self.build_q_lambda_targets(
                     rewards,
                     terminated,
                     mask,
@@ -348,7 +342,7 @@ class ICESLearner:
                     self.args.td_lambda,
                 )
             else:
-                targets = build_td_lambda_targets(
+                targets = self.build_td_lambda_targets(
                     rewards,
                     terminated,
                     mask,
@@ -604,4 +598,32 @@ class ICESLearner:
             sum_grad += x.grad.norm() ** 2
         return math.sqrt(sum_grad)
 
+    def build_td_lambda_targets(self, rewards, terminated, mask, target_qs, n_agents, gamma, td_lambda):
+        # Assumes <target_qs > in B*T*A and <reward >, <terminated >, <mask > in (at least) B*T-1*1
+        # Initialise last lambda-return for not terminated episodes
+        ret = target_qs.new_zeros(*target_qs.shape)
+        ret[:, -1] = target_qs[:, -1] * (1 - th.sum(terminated, dim=1))
+        # Backwards recursive update of the "forward view"
+        for t in range(ret.shape[1] - 2, -1,  -1):
+            ret[:, t] = td_lambda * gamma * ret[:, t + 1] + mask[:, t] \
+                        * (rewards[:, t] + (1 - td_lambda) * gamma * target_qs[:, t + 1] * (1 - terminated[:, t]))
+        # Returns lambda-return from t=0 to t=T-1, i.e., in B*T-1*A
+        return ret[:, 0:-1]
 
+    def build_q_lambda_targets(self, rewards, terminated, mask, exp_qvals, qvals, gamma, td_lambda):
+        # Assumes  <target_qs > in B*T*A and <reward >, <terminated >, <mask > in (at least) B*T-1*1
+        # Initialise  last  lambda -return  for  not  terminated  episodes
+        ret = exp_qvals.new_zeros(*exp_qvals.shape)
+        ret[:, -1] = exp_qvals[:, -1] * (1 - th.sum(terminated, dim=1))
+        # Backwards  recursive  update  of the "forward  view"
+        for t in range(ret.shape[1] - 2, -1, -1):
+            reward = rewards[:, t] + exp_qvals[:, t] - qvals[:, t]  # off-policy correction
+            ret[:, t] = td_lambda * gamma * ret[:, t + 1] + mask[:, t] * (
+                reward
+                + (1 - td_lambda) * gamma * exp_qvals[:, t + 1] * (1 - terminated[:, t])
+            )
+        # Returns lambda-return from t=0 to t=T-1, i.e. in B*T-1*A
+        return ret[:, 0:-1]
+    
+    def get_parameters_num(self, param_list):
+        return str(sum(p.numel() for p in param_list) / 999) + 'K'
