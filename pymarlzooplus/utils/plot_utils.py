@@ -25,6 +25,7 @@ PREDEFINED_MAP_ALGO_COLORS = {
     'CDS': '#964B00',  # Brown
     'MAVEN': '#FF69B4',  # Pink
     'CommFormer': '#008000',  # Green
+    'MAGIC': '#00A6D6',  # Cyan
     'IQL': '#FF8C00',  # Dark orange
 
 }
@@ -138,25 +139,35 @@ def create_plot(
     plt.close()
 
 
+def _extract_metric_values(metric_data):
+    if not metric_data:
+        return None
+    values = []
+    dtype = None
+    for item in metric_data:
+        if isinstance(item, dict):
+            if 'value' not in item:  # No values recorded, skip this metric
+                return None
+            dtype = dtype or item.get('dtype', None)
+            values.append(item['value'])
+        else:
+            values.append(item)
+    return np.array(values, dtype=dtype)
+
+
 def get_mean_and_std_data(results_data, results_type):
 
     # Mean values
     x_data = results_data[results_type + "_T"]
-    mean_data = results_data[results_type]
-    # Some metrics are stored in a list of dictionaries
-    if isinstance(mean_data[0], dict):
-        # Extract the 'value' from each dictionary and convert to a numpy array
-        if 'value' not in mean_data[0]:  # No values recorded, skip this metric
-            return None, None, None
-        mean_values = [item['value'] for item in mean_data]
-        mean_data = np.array(mean_values, dtype=mean_data[0]['dtype'])
+    mean_data = _extract_metric_values(results_data[results_type])
+    if mean_data is None:
+        return None, None, None
 
     # Std values
     std_data_key = "_".join(results_type.split("_")[:-1]) + "_std"
-    std_data = None if std_data_key not in results_data.keys() else results_data[std_data_key]
-    if std_data is not None and isinstance(std_data[0], dict):
-        std_values = [item['value'] for item in std_data]
-        std_data = np.array(std_values, dtype=std_data[0]['dtype'])
+    std_data = None if std_data_key not in results_data.keys() else _extract_metric_values(results_data[std_data_key])
+    if std_data is not None and len(std_data) != len(mean_data):
+        std_data = None
 
     return x_data, mean_data, std_data
 
