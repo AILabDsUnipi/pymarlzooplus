@@ -23,6 +23,7 @@ PyMARLzoo+ is based on [EPyMARL](https://github.com/uoe-agents/epymarl), and inc
   - CDS
   - MAVEN (integrated by [Apostolos Varelas](https://github.com/ApostolosVarelas) and [Vaios Konstantopoulos](https://github.com/Vaioskn), reporting results [here](https://drive.google.com/file/d/1n1mXdtQxJ7VWb7tbfCtlGSTJb8MfQ1M-/view?usp=sharing))
   - CommFormer (integrated by [NickCheliotis](https://github.com/NickCheliotis) and [petrostriantafyllos](https://github.com/petrostriantafyllos), reporting results [here](https://drive.google.com/file/d/1E5UnJcbLyw8Fw8EIgHTmsPEsZ2hhiBxe/view?usp=sharing)) 
+  - ICES (integrated by [Ioannis Petrousov](https://github.com/gpetrousov), reporting results [here](https://drive.google.com/file/d/1ltJwrQI7uVqmUXU7AA4ChfAzMyeXLa3Q/view?usp=drive_link)) 
 - Support for [PettingZoo](https://github.com/Farama-Foundation/PettingZoo) environments
 - Support for [Overcooked](https://github.com/HumanCompatibleAI/overcooked_ai) environments.
 - Support for [Pressure plate](https://github.com/uoe-agents/pressureplate) environments.
@@ -150,6 +151,7 @@ In the following instructions, ```<algo>``` (or ```"algo"```) can be replaced wi
 - "maser" 
 - "cds"
 - "maven"
+- "ices"
 - "commformer"
 
 You can specify the algorithm arguments:
