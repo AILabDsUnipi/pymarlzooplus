@@ -106,18 +106,18 @@ class MagicAgent(nn.Module):
         self.input_shape = input_shape
         self.is_image = False
 
-        gat_hidden_dim = getattr(args, "magic_gat_hidden_dim", self.hidden_dim)
-        gat_num_heads = getattr(args, "magic_gat_num_heads", 1)
-        gat_num_heads_out = getattr(args, "magic_gat_num_heads_out", 1)
+        gat_hidden_dim = args.gat_hidden_dim
+        gat_num_heads = args.gat_num_heads
+        gat_num_heads_out = args.gat_num_heads_out
 
-        self.directed = getattr(args, "magic_directed", False)
-        self.first_graph_complete = getattr(args, "magic_first_graph_complete", False)
-        self.second_graph_complete = getattr(args, "magic_second_graph_complete", False)
-        self.learn_second_graph = getattr(args, "magic_learn_second_graph", True)
-        self.use_gat_encoder = getattr(args, "magic_use_gat_encoder", False)
-        self.message_encoder_enabled = getattr(args, "magic_message_encoder", False)
-        self.message_decoder_enabled = getattr(args, "magic_message_decoder", False)
-        self.comm_mask_zero = getattr(args, "magic_comm_mask_zero", False)
+        self.directed = args.directed
+        self.first_graph_complete = args.first_graph_complete
+        self.second_graph_complete = args.second_graph_complete
+        self.learn_second_graph = args.learn_second_graph
+        self.use_gat_encoder = args.use_gat_encoder
+        self.message_encoder_enabled = args.message_encoder
+        self.message_decoder_enabled = args.message_decoder
+        self.comm_mask_zero = args.comm_mask_zero
 
         self.obs_encoder = nn.Linear(input_shape, self.hidden_dim)
         self.lstm_cell = nn.LSTMCell(self.hidden_dim, self.hidden_dim)
@@ -126,28 +126,28 @@ class MagicAgent(nn.Module):
             self.hidden_dim,
             gat_hidden_dim,
             num_heads=gat_num_heads,
-            self_loop_type=getattr(args, "magic_self_loop_type1", 1),
+            self_loop_type=args.self_loop_type1,
             average=False,
-            normalize=getattr(args, "magic_first_gat_normalize", False),
+            normalize=args.first_gat_normalize,
         )
         self.sub_processor2 = MagicGraphAttention(
             gat_hidden_dim * gat_num_heads,
             self.hidden_dim,
             num_heads=gat_num_heads_out,
-            self_loop_type=getattr(args, "magic_self_loop_type2", 1),
+            self_loop_type=args.self_loop_type2,
             average=True,
-            normalize=getattr(args, "magic_second_gat_normalize", False),
+            normalize=args.second_gat_normalize,
         )
 
         if self.use_gat_encoder:
-            gat_encoder_out_dim = getattr(args, "magic_gat_encoder_out_dim", self.hidden_dim)
+            gat_encoder_out_dim = args.gat_encoder_out_size
             self.gat_encoder = MagicGraphAttention(
                 self.hidden_dim,
                 gat_encoder_out_dim,
-                num_heads=getattr(args, "magic_ge_num_heads", 4),
+                num_heads=args.ge_num_heads,
                 self_loop_type=1,
                 average=True,
-                normalize=getattr(args, "magic_gat_encoder_normalize", False),
+                normalize=args.gat_encoder_normalize,
             )
             scheduler_input_dim = gat_encoder_out_dim
         else:
@@ -165,7 +165,7 @@ class MagicAgent(nn.Module):
 
         self.action_head = nn.Linear(2 * self.hidden_dim, self.n_actions)
 
-        if getattr(args, "magic_comm_init", "uniform") == "zeros":
+        if args.comm_init == "zeros":
             self._zero_init_communication()
 
     def _build_scheduler(self, input_dim):
