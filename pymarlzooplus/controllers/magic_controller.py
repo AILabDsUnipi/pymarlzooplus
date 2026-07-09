@@ -10,7 +10,7 @@ class MagicMAC(BasicMAC):
         super().__init__(scheme, groups, args)
 
         assert self.agent_output_type == "pi_logits"
-        assert args.action_selector == "soft_policies"
+        assert args.action_selector in ["soft_policies", "multinomial"]
 
     def forward(self, ep_batch, t, test_mode=False, return_critic_inputs=False):
         del test_mode

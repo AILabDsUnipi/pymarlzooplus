@@ -21,3 +21,5 @@ REGISTRY = {
         "commformer_mac": CommFormerMAC,
         "magic_mac": MagicMAC
 }
+
+

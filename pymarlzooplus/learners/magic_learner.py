@@ -22,15 +22,14 @@ class MagicLearner:
         self.optimiser = RMSprop(
             params=self.params,
             lr=args.lr,
-            alpha=getattr(args, "magic_optim_alpha", 0.97),
-            eps=getattr(args, "magic_optim_eps", 1e-6),
+            alpha=args.magic_optim_alpha,
+            eps=args.magic_optim_eps,
         )
 
         self.log_stats_t = -self.args.learner_log_interval - 1
-        self.value_coeff = getattr(args, "magic_value_coeff", getattr(args, "value_coeff", 0.01))
-        self.entropy_coef = getattr(args, "magic_entropy_coef", getattr(args, "entropy_coef", 0.0))
-        self.mean_ratio = getattr(args, "magic_mean_ratio", 0.0)
-        self.normalize_advantages = getattr(args, "magic_normalize_advantages", False)
+        self.value_coeff = args.value_coeff
+        self.entropy_coef = args.entropy_coef
+        self.normalize_advantages = args.normalize_advantages
 
         device = "cuda" if args.use_cuda else "cpu"
         if self.args.standardise_returns:
@@ -117,21 +116,12 @@ class MagicLearner:
         rewards = rewards.expand(batch_size, episode_len, self.n_agents)
         not_done = (1 - terminated).expand(batch_size, episode_len, self.n_agents)
 
-        coop_returns = th.zeros_like(rewards)
-        ncoop_returns = th.zeros_like(rewards)
         returns = th.zeros_like(rewards)
-        prev_coop_return = th.zeros(batch_size, self.n_agents, device=rewards.device)
-        prev_ncoop_return = th.zeros(batch_size, self.n_agents, device=rewards.device)
+        prev_return = th.zeros(batch_size, self.n_agents, device=rewards.device)
 
         for t in reversed(range(episode_len)):
-            coop_returns[:, t] = rewards[:, t] + self.args.gamma * prev_coop_return * not_done[:, t]
-            ncoop_returns[:, t] = rewards[:, t] + self.args.gamma * prev_ncoop_return * not_done[:, t]
-            prev_coop_return = coop_returns[:, t].clone()
-            prev_ncoop_return = ncoop_returns[:, t].clone()
-            returns[:, t] = (
-                self.mean_ratio * coop_returns[:, t].mean(dim=1, keepdim=True)
-                + (1 - self.mean_ratio) * ncoop_returns[:, t]
-            )
+            returns[:, t] = rewards[:, t] + self.args.gamma * prev_return * not_done[:, t]
+            prev_return = returns[:, t].clone()
         return returns
 
     def cuda(self):

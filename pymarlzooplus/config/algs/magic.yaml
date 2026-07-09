@@ -1,61 +1,73 @@
-# --- MAGIC specific parameters ---
+# --- MAGIC with Parallel Runner (16 Threads) ---
 
-action_selector: "soft_policies"
+# Action selector: multinomial
+action_selector: "multinomial"
 mask_before_softmax: True
 
-# Keep the default CPU path lightweight for local Mac experiments.
-runner: "episode"
-batch_size_run: 1
+# Epsilon schedule parameters (required by MultinomialActionSelector)
+epsilon_start: 1.0
+epsilon_finish: 0.05
+epsilon_anneal_time: 50000
+evaluation_epsilon: 0.0
+
+# Parallel runner configuration
+runner: "parallel"
+batch_size_run: 16
+
+# Replay buffer sizes
 buffer_size: 16
-batch_size: 4
+batch_size: 16
 
-target_update_interval_or_tau: 0.01
+# Learning rate and model dimension
+lr: 0.0003
+hidden_dim: 128
 
-lr: 0.0005
-hidden_dim: 64
-
+# Observation preprocessing flags
 obs_agent_id: True
-obs_last_action: False
+obs_last_action: True
 obs_individual_obs: False
 
+# MAGIC model components
+agent_output_type: "pi_logits"
 mac: "magic_mac"
 agent: "magic_agent"
-agent_output_type: "pi_logits"
 learner: "magic_learner"
 critic_type: "magic_critic"
 
-entropy_coef: 0.0
+# Reward/return normalization flags
 standardise_returns: False
-standardise_rewards: False
+standardise_rewards: True
 use_rnn: True
+
+# Algorithm identification name
+name: "magic"
+
+# MAGIC-specific GAT & communication hyperparameters
+self_loop_type1: 2
+self_loop_type2: 2
+gat_hidden_dim: 32
+gat_num_heads: 4
+gat_num_heads_out: 1
+first_gat_normalize: True
+second_gat_normalize: True
+directed: True
+use_gat_encoder: True
+gat_encoder_out_size: 64
+ge_num_heads: 4
+gat_encoder_normalize: True
+comm_mask_zero: False
+comm_init: "zeros"
+first_graph_complete: False
+second_graph_complete: False
+learn_second_graph: True
+normalize_advantages: True
 value_coeff: 0.01
-magic_value_coeff: 0.01
-magic_entropy_coef: 0.0
-magic_mean_ratio: 0.0
-magic_normalize_advantages: False
+entropy_coef: 0.0
+
+# Message encoder/decoder flags
+message_encoder: False
+message_decoder: False
+
+# RMSProp optimizer hyperparameters
 magic_optim_alpha: 0.97
 magic_optim_eps: 0.000001
-
-# MAGIC communication block. These names intentionally use a prefix so they do
-# not collide with other PyMARLZoo+ algorithms.
-magic_directed: False
-magic_gat_hidden_dim: 64
-magic_gat_num_heads: 1
-magic_gat_num_heads_out: 1
-magic_ge_num_heads: 4
-magic_use_gat_encoder: False
-magic_gat_encoder_out_dim: 64
-magic_first_graph_complete: False
-magic_second_graph_complete: False
-magic_learn_second_graph: True
-magic_self_loop_type1: 1
-magic_self_loop_type2: 1
-magic_first_gat_normalize: False
-magic_second_gat_normalize: False
-magic_gat_encoder_normalize: False
-magic_message_encoder: False
-magic_message_decoder: False
-magic_comm_mask_zero: False
-magic_comm_init: "uniform"
-
-name: "magic"

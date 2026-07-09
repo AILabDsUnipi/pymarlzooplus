@@ -29,3 +29,4 @@ REGISTRY = {
     "commformer_learner": CommFormerLearner,
     "magic_learner": MagicLearner,
 }
+
