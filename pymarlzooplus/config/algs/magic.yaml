@@ -65,8 +65,8 @@ value_coeff: 0.01
 entropy_coef: 0.0
 
 # Message encoder/decoder flags
-message_encoder: False
-message_decoder: False
+message_encoder: True
+message_decoder: True
 
 # RMSProp optimizer hyperparameters
 magic_optim_alpha: 0.97
