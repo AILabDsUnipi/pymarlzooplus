@@ -13,7 +13,6 @@ class MagicGraphAttention(nn.Module):
             num_heads=1,
             self_loop_type=2,
             average=False,
-            normalize=False,
             dropout=0.0,
             negative_slope=0.2,
             bias=True
@@ -24,7 +23,6 @@ class MagicGraphAttention(nn.Module):
         self.num_heads = num_heads
         self.self_loop_type = self_loop_type
         self.average = average
-        self.normalize = normalize
         self.dropout = dropout
 
         self.W = nn.Parameter(th.zeros(in_features, num_heads * out_features))
@@ -70,10 +68,9 @@ class MagicGraphAttention(nn.Module):
 
         adj = adj.unsqueeze(-1).expand(n_agents, n_agents, self.num_heads)
         attention = F.softmax(e * adj, dim=1) * adj
-        if self.normalize:
-            denom = attention.sum(dim=1, keepdim=True).clamp_min(1e-12)
-            attention = attention / denom
-            attention = attention * adj
+        denom = attention.sum(dim=1, keepdim=True).clamp_min(1e-12)
+        attention = attention / denom
+        attention = attention * adj
         attention = F.dropout(attention, self.dropout, training=self.training)
 
         outputs = []
@@ -110,15 +107,6 @@ class MagicAgent(nn.Module):
         gat_num_heads = args.gat_num_heads
         gat_num_heads_out = args.gat_num_heads_out
 
-        self.directed = args.directed
-        self.first_graph_complete = args.first_graph_complete
-        self.second_graph_complete = args.second_graph_complete
-        self.learn_second_graph = args.learn_second_graph
-        self.use_gat_encoder = args.use_gat_encoder
-        self.message_encoder_enabled = args.message_encoder
-        self.message_decoder_enabled = args.message_decoder
-        self.comm_mask_zero = args.comm_mask_zero
-
         self.obs_encoder = nn.Linear(input_shape, self.hidden_dim)
         self.lstm_cell = nn.LSTMCell(self.hidden_dim, self.hidden_dim)
 
@@ -128,7 +116,6 @@ class MagicAgent(nn.Module):
             num_heads=gat_num_heads,
             self_loop_type=args.self_loop_type1,
             average=False,
-            normalize=args.first_gat_normalize,
         )
         self.sub_processor2 = MagicGraphAttention(
             gat_hidden_dim * gat_num_heads,
@@ -136,37 +123,23 @@ class MagicAgent(nn.Module):
             num_heads=gat_num_heads_out,
             self_loop_type=args.self_loop_type2,
             average=True,
-            normalize=args.second_gat_normalize,
         )
 
-        if self.use_gat_encoder:
-            gat_encoder_out_dim = args.gat_encoder_out_size
-            self.gat_encoder = MagicGraphAttention(
-                self.hidden_dim,
-                gat_encoder_out_dim,
-                num_heads=args.ge_num_heads,
-                self_loop_type=1,
-                average=True,
-                normalize=args.gat_encoder_normalize,
-            )
-            scheduler_input_dim = gat_encoder_out_dim
-        else:
-            scheduler_input_dim = self.hidden_dim
-
-        if not self.first_graph_complete:
-            self.sub_scheduler_mlp1 = self._build_scheduler(scheduler_input_dim)
-        if self.learn_second_graph and not self.second_graph_complete:
-            self.sub_scheduler_mlp2 = self._build_scheduler(scheduler_input_dim)
-
-        if self.message_encoder_enabled:
-            self.message_encoder = nn.Linear(self.hidden_dim, self.hidden_dim)
-        if self.message_decoder_enabled:
-            self.message_decoder = nn.Linear(self.hidden_dim, self.hidden_dim)
+        gat_encoder_out_dim = args.gat_encoder_out_size
+        self.gat_encoder = MagicGraphAttention(
+            self.hidden_dim,
+            gat_encoder_out_dim,
+            num_heads=args.ge_num_heads,
+            self_loop_type=1,
+            average=True,
+        )
+        self.sub_scheduler_mlp1 = self._build_scheduler(gat_encoder_out_dim)
+        self.sub_scheduler_mlp2 = self._build_scheduler(gat_encoder_out_dim)
+        self.message_encoder = nn.Linear(self.hidden_dim, self.hidden_dim)
+        self.message_decoder = nn.Linear(self.hidden_dim, self.hidden_dim)
 
         self.action_head = nn.Linear(2 * self.hidden_dim, self.n_actions)
-
-        if args.comm_init == "zeros":
-            self._zero_init_communication()
+        self._zero_init_communication()
 
     def _build_scheduler(self, input_dim):
         hidden_dim = max(input_dim // 2, 1)
@@ -180,16 +153,12 @@ class MagicAgent(nn.Module):
         )
 
     def _zero_init_communication(self):
-        if self.message_encoder_enabled:
-            nn.init.zeros_(self.message_encoder.weight)
-            nn.init.zeros_(self.message_encoder.bias)
-        if self.message_decoder_enabled:
-            nn.init.zeros_(self.message_decoder.weight)
-            nn.init.zeros_(self.message_decoder.bias)
-        if hasattr(self, "sub_scheduler_mlp1"):
-            self.sub_scheduler_mlp1.apply(self._zero_init_linear)
-        if hasattr(self, "sub_scheduler_mlp2"):
-            self.sub_scheduler_mlp2.apply(self._zero_init_linear)
+        nn.init.zeros_(self.message_encoder.weight)
+        nn.init.zeros_(self.message_encoder.bias)
+        nn.init.zeros_(self.message_decoder.weight)
+        nn.init.zeros_(self.message_decoder.bias)
+        self.sub_scheduler_mlp1.apply(self._zero_init_linear)
+        self.sub_scheduler_mlp2.apply(self._zero_init_linear)
 
     @staticmethod
     def _zero_init_linear(module):
@@ -234,47 +203,19 @@ class MagicAgent(nn.Module):
 
     def _communicate(self, hidden_state):
         agent_mask = hidden_state.new_ones(self.n_agents, 1)
-        if self.comm_mask_zero:
-            agent_mask = agent_mask * 0.0
 
-        comm = hidden_state
-        if self.message_encoder_enabled:
-            comm = self.message_encoder(comm)
+        comm = self.message_encoder(hidden_state)
         comm = comm * agent_mask
-        comm_original = comm.clone()
 
-        if self.first_graph_complete:
-            adj1 = self._complete_graph(agent_mask)
-            encoded_state1 = None
-        elif self.use_gat_encoder:
-            adj_complete = self._complete_graph(agent_mask)
-            encoded_state1 = self.gat_encoder(comm, adj_complete)
-            adj1 = self._sub_scheduler(self.sub_scheduler_mlp1, encoded_state1, agent_mask)
-        else:
-            encoded_state1 = None
-            adj1 = self._sub_scheduler(self.sub_scheduler_mlp1, comm, agent_mask)
+        encoded_state = self.gat_encoder(comm, self._complete_graph(agent_mask))
+        adj1 = self._sub_scheduler(self.sub_scheduler_mlp1, encoded_state, agent_mask)
 
         comm = F.elu(self.sub_processor1(comm, adj1))
-
-        if self.learn_second_graph and not self.second_graph_complete:
-            if self.use_gat_encoder:
-                if encoded_state1 is None:
-                    encoded_state2 = self.gat_encoder(comm_original, self._complete_graph(agent_mask))
-                else:
-                    encoded_state2 = encoded_state1
-                adj2 = self._sub_scheduler(self.sub_scheduler_mlp2, encoded_state2, agent_mask)
-            else:
-                adj2 = self._sub_scheduler(self.sub_scheduler_mlp2, comm_original, agent_mask)
-        elif not self.learn_second_graph and not self.second_graph_complete:
-            adj2 = adj1
-        else:
-            adj2 = self._complete_graph(agent_mask)
+        adj2 = self._sub_scheduler(self.sub_scheduler_mlp2, encoded_state, agent_mask)
 
         comm = self.sub_processor2(comm, adj2)
         comm = comm * agent_mask
-        if self.message_decoder_enabled:
-            comm = self.message_decoder(comm)
-        return comm
+        return self.message_decoder(comm)
 
     def _sub_scheduler(self, scheduler, hidden_state, agent_mask):
         n_agents = self.n_agents
@@ -287,11 +228,7 @@ class MagicAgent(nn.Module):
             dim=1,
         ).view(n_agents, n_agents, 2 * hidden_dim)
 
-        if self.directed:
-            hard_attention = F.gumbel_softmax(scheduler(pair_inputs), hard=True, dim=-1)
-        else:
-            symmetric_logits = 0.5 * scheduler(pair_inputs) + 0.5 * scheduler(pair_inputs.permute(1, 0, 2))
-            hard_attention = F.gumbel_softmax(symmetric_logits, hard=True, dim=-1)
+        hard_attention = F.gumbel_softmax(scheduler(pair_inputs), hard=True, dim=-1)
 
         adj = hard_attention[:, :, 1]
         agent_mask = agent_mask.expand(n_agents, n_agents)

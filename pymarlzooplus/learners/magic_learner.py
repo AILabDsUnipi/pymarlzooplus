@@ -29,7 +29,6 @@ class MagicLearner:
         self.log_stats_t = -self.args.learner_log_interval - 1
         self.value_coeff = args.value_coeff
         self.entropy_coef = args.entropy_coef
-        self.normalize_advantages = args.normalize_advantages
 
         device = "cuda" if args.use_cuda else "cpu"
         if self.args.standardise_returns:
@@ -73,10 +72,9 @@ class MagicLearner:
             returns = (returns - self.ret_ms.mean) / th.sqrt(self.ret_ms.var)
 
         advantages = returns - values.detach()
-        if self.normalize_advantages:
-            active_advantages = advantages[mask.expand_as(advantages) > 0]
-            if active_advantages.numel() > 1:
-                advantages = (advantages - active_advantages.mean()) / (active_advantages.std() + 1e-8)
+        active_advantages = advantages[mask.expand_as(advantages) > 0]
+        if active_advantages.numel() > 1:
+            advantages = (advantages - active_advantages.mean()) / (active_advantages.std() + 1e-8)
 
         pi = mac_out
         agent_mask = mask.repeat(1, 1, self.n_agents)

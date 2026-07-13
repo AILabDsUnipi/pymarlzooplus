@@ -48,25 +48,10 @@ self_loop_type2: 2
 gat_hidden_dim: 32
 gat_num_heads: 4
 gat_num_heads_out: 1
-first_gat_normalize: True
-second_gat_normalize: True
-directed: True
-use_gat_encoder: True
 gat_encoder_out_size: 64
 ge_num_heads: 4
-gat_encoder_normalize: True
-comm_mask_zero: False
-comm_init: "zeros"
-first_graph_complete: False
-second_graph_complete: False
-learn_second_graph: True
-normalize_advantages: True
 value_coeff: 0.01
 entropy_coef: 0.0
-
-# Message encoder/decoder flags
-message_encoder: True
-message_decoder: True
 
 # RMSProp optimizer hyperparameters
 magic_optim_alpha: 0.97
