@@ -143,13 +143,12 @@ class MagicAgent(nn.Module):
 
     def _build_scheduler(self, input_dim):
         hidden_dim = max(input_dim // 2, 1)
-        bottleneck_dim = max(input_dim // 8, 1)
         return nn.Sequential(
             nn.Linear(input_dim * 2, hidden_dim),
             nn.ReLU(),
-            nn.Linear(hidden_dim, bottleneck_dim),
+            nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(),
-            nn.Linear(bottleneck_dim, 2),
+            nn.Linear(hidden_dim, 2),
         )
 
     def _zero_init_communication(self):
