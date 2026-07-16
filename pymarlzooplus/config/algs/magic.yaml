@@ -43,8 +43,6 @@ use_rnn: True
 name: "magic"
 
 # MAGIC-specific GAT & communication hyperparameters
-self_loop_type1: 2
-self_loop_type2: 2
 gat_hidden_dim: 32
 gat_num_heads: 4
 gat_num_heads_out: 1

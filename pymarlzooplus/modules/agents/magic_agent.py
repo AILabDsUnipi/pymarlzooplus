@@ -114,14 +114,14 @@ class MagicAgent(nn.Module):
             self.hidden_dim,
             gat_hidden_dim,
             num_heads=gat_num_heads,
-            self_loop_type=args.self_loop_type1,
+            self_loop_type=2,
             average=False,
         )
         self.sub_processor2 = MagicGraphAttention(
             gat_hidden_dim * gat_num_heads,
             self.hidden_dim,
             num_heads=gat_num_heads_out,
-            self_loop_type=args.self_loop_type2,
+            self_loop_type=2,
             average=True,
         )
 
@@ -153,9 +153,7 @@ class MagicAgent(nn.Module):
 
     def _zero_init_communication(self):
         nn.init.zeros_(self.message_encoder.weight)
-        nn.init.zeros_(self.message_encoder.bias)
         nn.init.zeros_(self.message_decoder.weight)
-        nn.init.zeros_(self.message_decoder.bias)
         self.sub_scheduler_mlp1.apply(self._zero_init_linear)
         self.sub_scheduler_mlp2.apply(self._zero_init_linear)
 
